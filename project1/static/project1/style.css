@@ -1,0 +1,20 @@
+/* project1/static/project1/style.css */
+
+body {
+  /* light gray background just for this app */
+  background-color: #f0f0f0;
+}
+
+.project1-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1rem;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.project1-container h1 {
+  text-align: center;
+  color: #333;
+}

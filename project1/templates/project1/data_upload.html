@@ -1,0 +1,13 @@
+{% load static %}
+<!— templates/project1/data_upload.html —>
+<h1>Upload a CSV Dataset</h1>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <input type="file" name="dataset" accept=".csv" required>
+  <button type="submit">Upload & Visualize</button>
+</form>
+
+{% if plot_url %}
+  <h2>Visualization</h2>
+  <img src="{{ plot_url }}" alt="Data plot">
+{% endif %}

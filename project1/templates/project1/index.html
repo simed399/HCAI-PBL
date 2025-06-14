@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'project1/style.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="project1-container">
+    <h1>This is Project 1</h1>
+    <p>Welcome to your brand‐new app.</p>
+  </div>
+{% endblock %}
+
+{% block script %}{% endblock %}

@@ -13,14 +13,14 @@ def index(request):
     
     
     students = [
-        {"name": "Jane Doe", "matriculation": "123456"},
-        {"name": "John Smith", "matriculation": "654321"},
-        {"name": "Alex Johnson", "matriculation": "789012"},
+        {"name": "Mohammed Boutchich", "matriculation": "21968035"},
+        {"name": "Mohamed Miled", "matriculation": "201965712"},
+        
     ]
     
     projects = [
         {"name": "Home", "url_name": "home:index"},
-        {"name": "Home 2", "url_name": "home:index"},
+        {"name": "project1", "url_name": "project1:index"},
     ]
     
     context = { 
