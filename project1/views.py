@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.use("Agg")  # headless backend
+matplotlib.use("Agg")
 
 import base64, io
 import pandas as pd
@@ -25,7 +25,7 @@ def index(request):
         "error":           None,
     }
 
-    # 1️⃣ Upload CSV
+    # ─── 1️⃣ Upload CSV ───────────────────────────────
     if request.method == "POST" and request.FILES.get("csv_file"):
         df = pd.read_csv(request.FILES["csv_file"])
         request.session["csv_data"] = df.to_json()
@@ -35,7 +35,7 @@ def index(request):
             "table":           df.head().to_html(classes="table", index=False),
         })
 
-    # 2️⃣ Scatter Plot
+    # ─── 2️⃣ Scatter Plot ─────────────────────────────
     elif request.method == "POST" and request.POST.get("action") == "plot":
         df = pd.read_json(request.session["csv_data"])
         context.update({
@@ -43,28 +43,21 @@ def index(request):
             "numeric_columns": df.select_dtypes(include="number").columns.tolist(),
             "table":           df.head().to_html(classes="table", index=False),
         })
-
-        x_col = request.POST["feature_x"]
-        y_col = request.POST["feature_y"]
-        tgt   = request.POST["target"]
-
-        # factorize for coloring if needed
+        x = request.POST["feature_x"]
+        y = request.POST["feature_y"]
+        tgt = request.POST["target"]
         if df[tgt].dtype == object:
             df[tgt], _ = pd.factorize(df[tgt])
-
         fig, ax = plt.subplots()
-        sc = ax.scatter(df[x_col], df[y_col], c=df[tgt], cmap="viridis", alpha=0.7)
-        ax.set_xlabel(x_col)
-        ax.set_ylabel(y_col)
+        sc = ax.scatter(df[x], df[y], c=df[tgt], cmap="viridis", alpha=0.7)
+        ax.set_xlabel(x); ax.set_ylabel(y)
         plt.colorbar(sc, ax=ax)
-
         buf = io.BytesIO()
         fig.savefig(buf, format="png", bbox_inches="tight")
-        plt.close(fig)
-        buf.seek(0)
+        plt.close(fig); buf.seek(0)
         context["plot_url"] = base64.b64encode(buf.read()).decode()
 
-    # 3️⃣ Train Model
+    # ─── 3️⃣ Train Model ──────────────────────────────
     elif request.method == "POST" and request.POST.get("action") == "train":
         df = pd.read_json(request.session["csv_data"])
         context.update({
@@ -73,62 +66,71 @@ def index(request):
             "table":           df.head().to_html(classes="table", index=False),
         })
 
+        # read common params
         problem   = request.POST["problem_type"]
         model_sel = request.POST["model"]
         test_size = float(request.POST["test_size"])
-        hp_val    = float(request.POST["hyperparam"])
-        target    = request.POST.get("target_class") or request.POST.get("target_reg")
+        context["last_problem"] = problem   # <-- make available to template
 
-        # guard: classification only on categorical columns
+        # pick target
+        target = request.POST.get("target_class") or request.POST.get("target_reg")
+
+        # guard: classification on categorical only
         if problem == "classification" and df[target].dtype != object:
-            context["error"] = (
-                f"Cannot classify numeric column “{target}”. "
-                "Please pick a categorical target or switch to Regression."
-            )
+            context["error"] = f"Cannot classify numeric column “{target}”."
             return render(request, "project1/index.html", context)
 
-        # if regression on categorical, encode the target
+        # encode target if needed
         if problem == "regression" and df[target].dtype == object:
             df[target], _ = pd.factorize(df[target])
 
-        # build X from numeric features only
-        numeric_cols = df.select_dtypes(include="number").columns.tolist()
-        if target in numeric_cols:
-            numeric_cols.remove(target)
-        X = df[numeric_cols]
-        y = df[target]
+        # build numeric X
+        num_cols = df.select_dtypes(include="number").columns.tolist()
+        if target in num_cols:
+            num_cols.remove(target)
+        X, y = df[num_cols], df[target]
+        Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=test_size, random_state=42)
 
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=42
-        )
-
-        # classification branch
+        # ─── classification ────────────────────────────
         if problem == "classification":
             if model_sel == "LogisticRegression":
-                model = LogisticRegression(C=hp_val, max_iter=1000)
+                C        = float(request.POST["lr_C"])
+                max_iter = int(request.POST["lr_max_iter"])
+                penalty  = request.POST["lr_penalty"]
+                solver   = request.POST["lr_solver"]
+                model = LogisticRegression(
+                    C=C, max_iter=max_iter, penalty=penalty, solver=solver
+                )
             else:
-                model = RandomForestClassifier(n_estimators=int(hp_val), random_state=42)
+                n_est = int(request.POST["rf_n_estimators"])
+                max_d = request.POST["rf_max_depth"] or None
+                if max_d: max_d = int(max_d)
+                min_ss = int(request.POST["rf_min_samples_split"])
+                min_sl = int(request.POST["rf_min_samples_leaf"])
+                model = RandomForestClassifier(
+                    n_estimators=n_est,
+                    max_depth=max_d,
+                    min_samples_split=min_ss,
+                    min_samples_leaf=min_sl,
+                    random_state=42
+                )
 
-            model.fit(X_train, y_train)
-            preds = model.predict(X_test)
-
-            acc = accuracy_score(y_test, preds)
-            f1  = f1_score(y_test, preds, average="weighted")
-            cm  = confusion_matrix(y_test, preds)
+            model.fit(Xtr, ytr)
+            preds = model.predict(Xte)
+            acc   = accuracy_score(yte, preds)
+            f1    = f1_score(yte, preds, average="weighted")
+            cm    = confusion_matrix(yte, preds)
 
             # plot confusion matrix
             fig, ax = plt.subplots()
             ax.imshow(cm, cmap="Blues")
-            ax.set_xlabel("Predicted")
-            ax.set_ylabel("Actual")
+            ax.set_xlabel("Predicted"); ax.set_ylabel("Actual")
             for i in range(cm.shape[0]):
                 for j in range(cm.shape[1]):
-                    ax.text(j, i, cm[i, j], ha="center", va="center")
-
+                    ax.text(j, i, cm[i,j], ha="center", va="center")
             buf = io.BytesIO()
             fig.savefig(buf, format="png", bbox_inches="tight")
-            plt.close(fig)
-            buf.seek(0)
+            plt.close(fig); buf.seek(0)
             cm_b64 = base64.b64encode(buf.read()).decode()
 
             context["train_results"] = {
@@ -137,31 +139,47 @@ def index(request):
                 "confusion_matrix": cm_b64,
             }
 
-        # regression branch
+        # ─── regression ────────────────────────────────
         else:
             if model_sel == "LinearRegression":
-                model = LinearRegression()
+                fit_int  = request.POST.get("lin_fit_intercept")=="on"
+                copy_x   = request.POST.get("lin_copy_X")=="on"
+                positive = request.POST.get("lin_positive")=="on"
+                n_jobs   = int(request.POST["lin_n_jobs"])
+                model = LinearRegression(
+                    fit_intercept=fit_int,
+                    copy_X=copy_x,
+                    positive=positive,
+                    n_jobs=n_jobs
+                )
             else:
-                model = RandomForestRegressor(n_estimators=int(hp_val), random_state=42)
+                n_est = int(request.POST["rf_n_estimators"])
+                max_d = request.POST["rf_max_depth"] or None
+                if max_d: max_d = int(max_d)
+                min_ss = int(request.POST["rf_min_samples_split"])
+                min_sl = int(request.POST["rf_min_samples_leaf"])
+                model = RandomForestRegressor(
+                    n_estimators=n_est,
+                    max_depth=max_d,
+                    min_samples_split=min_ss,
+                    min_samples_leaf=min_sl,
+                    random_state=42
+                )
 
-            model.fit(X_train, y_train)
-            preds = model.predict(X_test)
-
-            mse = mean_squared_error(y_test, preds)
-            r2  = r2_score(y_test, preds)
+            model.fit(Xtr, ytr)
+            preds = model.predict(Xte)
+            mse   = mean_squared_error(yte, preds)
+            r2    = r2_score(yte, preds)
 
             # plot actual vs predicted
             fig, ax = plt.subplots()
-            ax.scatter(y_test, preds, alpha=0.7)
-            ax.set_xlabel("Actual")
-            ax.set_ylabel("Predicted")
-            lims = [min(y_test.min(), preds.min()), max(y_test.max(), preds.max())]
+            ax.scatter(yte, preds, alpha=0.7)
+            lims = [min(yte.min(), preds.min()), max(yte.max(), preds.max())]
             ax.plot(lims, lims, "k--")
-
+            ax.set_xlabel("Actual"); ax.set_ylabel("Predicted")
             buf = io.BytesIO()
             fig.savefig(buf, format="png", bbox_inches="tight")
-            plt.close(fig)
-            buf.seek(0)
+            plt.close(fig); buf.seek(0)
             reg_b64 = base64.b64encode(buf.read()).decode()
 
             context["train_results"] = {
