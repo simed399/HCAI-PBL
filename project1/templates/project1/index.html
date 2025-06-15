@@ -3,173 +3,162 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Supervised Learning Interface</title>
+  <title>Project 1: Supervised Learning</title>
   <link rel="stylesheet" href="{% static 'project1/style.css' %}">
+  <style>
+    .target-group, .param-group { display:none; margin:8px 0; }
+    .error { color:red; margin:8px 0; }
+  </style>
 </head>
 <body>
-  <header class="header">
-    <h1>📊 Supervised Learning Interface</h1>
-    <p>Upload your data, explore it, and train models—all in one place.</p>
-  </header>
-
-  <main class="container">
+  <div class="container">
+    <h1>Supervised Learning Interface</h1>
     {% if error %}
-      <div class="alert alert-error">{{ error }}</div>
+      <div class="error">{{ error }}</div>
     {% endif %}
 
-    <!-- Upload Card -->
-    <section class="card">
-      <h2>1. Upload CSV</h2>
-      <form method="post" enctype="multipart/form-data" class="form-inline">
-        {% csrf_token %}
-        <input class="file-input" type="file" name="csv_file" accept=".csv" required>
-        <button class="btn" type="submit">Upload</button>
-      </form>
-    </section>
+    <!-- 1️⃣ Upload CSV -->
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="file" name="csv_file" accept=".csv" required>
+      <button type="submit">Upload CSV</button>
+    </form>
 
     {% if table %}
-      <!-- Preview Card -->
-      <section class="card">
-        <h2>2. Data Preview</h2>
-        <div class="table-wrapper">{{ table|safe }}</div>
-      </section>
+      <!-- 2️⃣ Data Preview -->
+      <h2>Data Preview</h2>
+      {{ table|safe }}
 
-      <!-- Plot Card -->
-      <section class="card">
-        <h2>3. Scatter Plot</h2>
-        <form method="post" class="form-grid">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="plot">
-          <div>
-            <label for="feature_x">X:</label>
-            <select id="feature_x" name="feature_x">{% for c in column_names %}<option>{{c}}</option>{% endfor %}</select>
-          </div>
-          <div>
-            <label for="feature_y">Y:</label>
-            <select id="feature_y" name="feature_y">{% for c in column_names %}<option>{{c}}</option>{% endfor %}</select>
-          </div>
-          <div>
-            <label for="target">Color:</label>
-            <select id="target" name="target">{% for c in column_names %}<option>{{c}}</option>{% endfor %}</select>
-          </div>
-          <div class="form-actions">
-            <button class="btn" type="submit">Plot</button>
-          </div>
-        </form>
-        {% if plot_url %}
-          <div class="img-wrapper">
-            <img src="data:image/png;base64,{{ plot_url }}" alt="scatter plot">
-          </div>
-        {% endif %}
-      </section>
-
-      <!-- Train Card -->
-      <section class="card">
-        <h2>4. Train a Model</h2>
-        <form method="post" class="form-grid">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="train">
-
-          <div>
-            <label for="problem-type">Problem:</label>
-            <select id="problem-type" name="problem_type">
-              <option value="classification">Classification</option>
-              <option value="regression">Regression</option>
-            </select>
-          </div>
-
-          <div class="target-group cls">
-            <label for="tgt_cls">Target (cat):</label>
-            <select id="tgt_cls" name="target_class">
-              {% for c in column_names %}
-                {% if c not in numeric_columns %}
-                  <option>{{c}}</option>
-                {% endif %}
-              {% endfor %}
-            </select>
-          </div>
-
-          <div class="target-group reg">
-            <label for="tgt_reg">Target (num):</label>
-            <select id="tgt_reg" name="target_reg">
-              {% for c in numeric_columns %}
-                <option>{{c}}</option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <div>
-            <label for="model-select">Model:</label>
-            <select id="model-select" name="model">
-              <option>LogisticRegression</option>
-              <option>RandomForestClassifier</option>
-              <option>LinearRegression</option>
-              <option>RandomForestRegressor</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="test-size">Test Size:</label>
-            <input id="test-size" type="number" name="test_size" step="0.1" value="0.3">
-          </div>
-
-          <div class="param-group param-LogisticRegression">
-            <label for="hp-c">C:</label>
-            <input id="hp-c" type="number" name="hyperparam" step="0.1" value="1.0">
-          </div>
-
-          <div class="param-group param-RandomForestClassifier param-RandomForestRegressor">
-            <label for="hp-n">n_estimators:</label>
-            <input id="hp-n" type="number" name="hyperparam" step="1" value="100">
-          </div>
-
-          <div class="form-actions">
-            <button class="btn" type="submit">Train</button>
-          </div>
-        </form>
-      </section>
-
-      {% if train_results %}
-        <!-- Results Card -->
-        <section class="card">
-          <h2>5. Results</h2>
-          {% if request.POST.problem_type == "classification" %}
-            <p><strong>Accuracy:</strong> {{ train_results.accuracy }}  
-            <strong>F1 Score:</strong> {{ train_results.f1_score }}</p>
-            <div class="img-wrapper">
-              <img src="data:image/png;base64,{{ train_results.confusion_matrix }}" alt="confusion matrix">
-            </div>
-          {% else %}
-            <p><strong>MSE:</strong> {{ train_results.mse }}  
-            <strong>R²:</strong> {{ train_results.r2 }}</p>
-            <div class="img-wrapper">
-              <img src="data:image/png;base64,{{ train_results.reg_plot }}" alt="regression plot">
-            </div>
-          {% endif %}
-        </section>
+      <!-- 3️⃣ Scatter Plot -->
+      <h2>Scatter Plot</h2>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="plot">
+        <label>X:</label>
+        <select name="feature_x">{% for c in column_names %}<option>{{c}}</option>{% endfor %}</select>
+        <label>Y:</label>
+        <select name="feature_y">{% for c in column_names %}<option>{{c}}</option>{% endfor %}</select>
+        <label>Color:</label>
+        <select name="target">{% for c in column_names %}<option>{{c}}</option>{% endfor %}</select>
+        <button type="submit">Plot</button>
+      </form>
+      {% if plot_url %}
+        <img src="data:image/png;base64,{{ plot_url }}" alt="scatter plot">
       {% endif %}
+
+      <!-- 4️⃣ Train a Model -->
+      <h2>Train Model</h2>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="train">
+
+        <label>Problem:</label>
+        <select id="ptype" name="problem_type">
+          <option value="classification">Classification</option>
+          <option value="regression">Regression</option>
+        </select>
+
+        <!-- classification target -->
+        <div class="target-group cls">
+          <label>Target (cat):</label>
+          <select name="target_class">
+            {% for c in column_names %}
+              {% if c not in numeric_columns %}
+                <option>{{c}}</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- regression target -->
+        <div class="target-group reg">
+          <label>Target (num):</label>
+          <select name="target_reg">
+            {% for c in numeric_columns %}
+              <option>{{c}}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <label>Model:</label>
+        <select id="model-select" name="model">
+          <option value="LogisticRegression">LogisticRegression</option>
+          <option value="RandomForestClassifier">RandomForestClassifier</option>
+          <option value="LinearRegression">LinearRegression</option>
+          <option value="RandomForestRegressor">RandomForestRegressor</option>
+        </select>
+
+        <label>Test size:</label>
+        <input type="number" name="test_size" step="0.1" min="0.1" max="0.9" value="0.3">
+
+        <!-- LogisticRegression hyperparams -->
+        <div class="param-group param-LogisticRegression">
+          <label>C:</label><input name="lr_C" type="number" step="0.1" value="1.0">
+          <label>max_iter:</label><input name="lr_max_iter" type="number" step="1" value="100">
+          <label>penalty:</label>
+          <select name="lr_penalty">
+            <option>l1</option><option>l2</option><option>elasticnet</option><option>none</option>
+          </select>
+          <label>solver:</label>
+          <select name="lr_solver">
+            <option>lbfgs</option><option>liblinear</option><option>saga</option><option>newton-cg</option><option>sag</option>
+          </select>
+        </div>
+
+        <!-- RandomForest hyperparams -->
+        <div class="param-group param-RandomForestClassifier param-RandomForestRegressor">
+          <label>n_estimators:</label><input name="rf_n_estimators" type="number" step="1" value="100">
+          <label>max_depth:</label><input name="rf_max_depth" type="number" step="1" value="">
+          <label>min_samples_split:</label><input name="rf_min_samples_split" type="number" step="1" value="2">
+          <label>min_samples_leaf:</label><input name="rf_min_samples_leaf" type="number" step="1" value="1">
+        </div>
+
+        <!-- LinearRegression hyperparams -->
+        <div class="param-group param-LinearRegression">
+          <label>fit_intercept:</label><input name="lin_fit_intercept" type="checkbox" checked>
+          <label>copy_X:</label><input name="lin_copy_X" type="checkbox" checked>
+          <label>positive:</label><input name="lin_positive" type="checkbox">
+          <label>n_jobs:</label><input name="lin_n_jobs" type="number" step="1" value="1">
+        </div>
+
+        <button type="submit">Train</button>
+      </form>
+
+      <!-- 5️⃣ Results -->
+      {% if train_results %}
+        <h2>Results</h2>
+        {% if last_problem == "classification" %}
+          <p>Accuracy: {{ train_results.accuracy }}<br>
+             F1 Score: {{ train_results.f1_score }}</p>
+          <img src="data:image/png;base64,{{ train_results.confusion_matrix }}" alt="confusion matrix">
+        {% else %}
+          <p>MSE: {{ train_results.mse }}<br>
+             R²:  {{ train_results.r2 }}</p>
+          <img src="data:image/png;base64,{{ train_results.reg_plot }}" alt="regression plot">
+        {% endif %}
+      {% endif %}
+
     {% endif %}
-  </main>
+  </div>
 
   <script>
-    // Toggle target selects
-    const p = document.getElementById("problem-type"),
-          cls = document.querySelectorAll(".cls"),
-          reg = document.querySelectorAll(".reg"),
-          mdl = document.getElementById("model-select"),
-          pgs = document.querySelectorAll(".param-group");
+    // toggle target selects
+    const ptype = document.getElementById("ptype"),
+          cls    = document.querySelectorAll(".cls"),
+          reg    = document.querySelectorAll(".reg"),
+          mdl    = document.getElementById("model-select"),
+          pgs    = document.querySelectorAll(".param-group");
 
     function updProblem(){
-      cls.forEach(d => d.style.display = p.value==="classification" ? "block":"none");
-      reg.forEach(d => d.style.display = p.value==="regression"     ? "block":"none");
+      cls.forEach(d => d.style.display = ptype.value==="classification" ? "block":"none");
+      reg.forEach(d => d.style.display = ptype.value==="regression"     ? "block":"none");
     }
-    p.addEventListener("change", updProblem);
+    ptype.addEventListener("change", updProblem);
     updProblem();
 
     function updParams(){
       pgs.forEach(pg => {
-        pg.style.display = pg.classList.contains(`param-${mdl.value}`) 
-          ? "block" : "none";
+        pg.style.display = pg.classList.contains(`param-${mdl.value}`) ? "block":"none";
       });
     }
     mdl.addEventListener("change", updParams);
