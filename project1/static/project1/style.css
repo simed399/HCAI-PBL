@@ -1,20 +1,126 @@
-/* project1/static/project1/style.css */
-
+/* typography & colors */
 body {
-  /* light gray background just for this app */
-  background-color: #f0f0f0;
-}
-
-.project1-container {
-  max-width: 600px;
-  margin: 2rem auto;
-  padding: 1rem;
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.project1-container h1 {
-  text-align: center;
+  font-family: "Segoe UI", sans-serif;
+  background: #f2f5f9;
   color: #333;
+  margin: 0;
+}
+
+.header {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: #4a90e2;
+  color: #fff;
+}
+
+.header h1 { margin: 0; font-size: 2rem; }
+.header p  { margin: 0.5rem 0 0; }
+
+/* main container */
+.container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* cards */
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+}
+
+.card h2 {
+  margin-top: 0;
+  font-size: 1.25rem;
+  border-bottom: 2px solid #4a90e2;
+  display: inline-block;
+  padding-bottom: 0.25rem;
+}
+
+/* form layouts */
+.form-inline {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  text-align: right;
+}
+
+/* inputs/buttons */
+input[type="file"],
+select,
+input[type="number"],
+button {
+  font-size: 0.95rem;
+  padding: 0.5rem;
+  border: 1px solid #ccd6e0;
+  border-radius: 4px;
+}
+
+button.btn {
+  background: #4a90e2;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button.btn:hover {
+  background: #357ab8;
+}
+
+/* tables */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+table.table th,
+table.table td {
+  border: 1px solid #e1e4e8;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+/* images */
+.img-wrapper {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.img-wrapper img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #ccd6e0;
+  border-radius: 4px;
+}
+
+/* alerts */
+.alert {
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.alert-error {
+  background: #ffe3e3;
+  color: #a33;
 }
