@@ -1,11 +1,127 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="utf-8">
-  <title>Project 3: Explainability</title>
+    <title>Project 3: Explainability</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        .table th, .table td {
+            border: 1px solid #ccc;
+            padding: 6px;
+        }
+        .table th {
+            background-color: #f2f2f2;
+        }
+        output {
+            font-weight: bold;
+            margin-left: 10px;
+        }
+    </style>
 </head>
 <body>
-  <h1>Project 3 Landing Page</h1>
-  <p>Welcome to the Explainability app! We’ll fill this in as we go.</p>
+
+    <h1>Project 3: Explainability</h1>
+
+    <h2>🔍 Sample of the Dataset</h2>
+    {{ df_sample|safe }}
+
+    <h2>🧠 Model Selector + Sparsity Control</h2>
+
+    <form id="lambdaForm">
+        <label for="modelSelector">Model:</label>
+        <select id="modelSelector" name="model">
+            <option value="tree" {% if model_type == 'tree' %}selected{% endif %}>Decision Tree</option>
+            <option value="logreg" {% if model_type == 'logreg' %}selected{% endif %}>Logistic Regression</option>
+        </select>
+
+        <br><br>
+
+        <label for="lambdaSlider">λ (higher = simpler model):</label>
+        <input type="range" id="lambdaSlider" name="lambda" min="0.01" max="0.2" step="0.005" value="{{ lambda_val }}">
+        <output id="lambdaValue">{{ lambda_val }}</output>
+
+        <br><br>
+        <button type="submit">Apply</button>
+    </form>
+
+    <h3>📊 Model Summary</h3>
+    <p><strong>λ (regularization strength):</strong> <span id="lambdaDisplay">{{ lambda_val }}</span></p>
+    <p><strong>Test Accuracy:</strong> <span id="accuracy">{{ accuracy }}</span>%</p>
+    <p><strong>Model Complexity:</strong> <span id="sparsity">{{ sparsity }}</span>
+        {% if model_type == 'tree' %}leaves{% else %}features{% endif %}
+    </p>
+
+    <h3>🖼️ Model Visualization</h3>
+    <img id="treeImage" src="data:image/png;base64,{{ tree_plot }}" alt="Model Plot" style="max-width:100%; height:auto;">
+
+    <h2>🔁 Counterfactual Explorer</h2>
+
+    <form id="cfForm">
+        <label for="cfRow">Select Row:</label>
+        <select id="cfRow">
+            {% for i in row_indices %}
+            <option value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="cfTarget">Target Class:</label>
+        <select id="cfTarget">
+            <option value="Adelie">Adelie</option>
+            <option value="Chinstrap">Chinstrap</option>
+            <option value="Gentoo">Gentoo</option>
+        </select>
+
+        <button type="submit">Generate Counterfactuals</button>
+    </form>
+
+    <div id="cfOutput">
+        <p><em>Top counterfactuals will appear here.</em></p>
+    </div>
+
+    <script>
+        const form = document.getElementById("lambdaForm");
+        const slider = document.getElementById("lambdaSlider");
+        const modelSelector = document.getElementById("modelSelector");
+
+        slider.addEventListener("input", function () {
+            document.getElementById("lambdaValue").textContent = this.value;
+        });
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            const lambdaVal = slider.value;
+            const modelType = modelSelector.value;
+
+            fetch(`/project3/update/?lambda=${lambdaVal}&model=${modelType}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("lambdaDisplay").textContent = data.lambda_val;
+                    document.getElementById("accuracy").textContent = data.accuracy;
+                    document.getElementById("sparsity").textContent = data.sparsity;
+
+                    const img = document.getElementById("treeImage");
+                    img.src = "data:image/png;base64," + data.tree_plot + "#rand=" + Math.random();
+                    img.style.display = "block";
+                });
+        });
+
+        document.getElementById("cfForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const row = document.getElementById("cfRow").value;
+            const target = document.getElementById("cfTarget").value;
+
+            fetch(`/project3/counterfactual/?row=${row}&target=${target}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("cfOutput").innerHTML = data.html_table;
+                });
+        });
+    </script>
+
 </body>
 </html>
