@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Task 3: AL Experiment &amp; Evaluation</h1>
+  <form method="post" action="{% url 'project2:run_experiment' %}">
+    {% csrf_token %}
+    <label>Strategy:
+      <select name="strategy">
+        <option value="uncertainty">Uncertainty Sampling</option>
+        <option value="margin">Margin Sampling</option>
+        <option value="entropy">Entropy Sampling</option>
+      </select>
+    </label><br/>
+    <label>Budget (labels to acquire):
+      <input type="number" name="budget" value="50" min="1" max="5000"/>
+    </label><br/>
+    <button type="submit">Run Experiment</button>
+  </form>
+{% endblock %}

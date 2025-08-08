@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Study Consent</h1>
+  <p>Welcome! This study will take about 25 minutes. You will rate movies and answer surveys. Your participation is voluntary.</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">I Consent and Begin Study</button>
+  </form>
+{% endblock %}

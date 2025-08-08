@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Post-Study Survey</h1>
+  <form method="post">
+    {% csrf_token %}
+
+    <label for="trust">I trust these recommendations (1 = Strongly disagree, 7 = Strongly agree):</label>
+    <input id="trust" name="trust" type="number" min="1" max="7" required><br>
+
+    <label for="transparency">I understood how my ratings affected recommendations (1 = Strongly disagree, 7 = Strongly agree):</label>
+    <input id="transparency" name="transparency" type="number" min="1" max="7" required><br>
+
+    <label for="satisfaction">Overall satisfaction (1 = Very dissatisfied, 7 = Very satisfied):</label>
+    <input id="satisfaction" name="satisfaction" type="number" min="1" max="7" required><br>
+
+    <button type="submit">Submit Survey</button>
+  </form>
+{% endblock %}

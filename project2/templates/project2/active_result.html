@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Active Learning Result</h1>
+  <p>
+    Strategy: <strong>{{ strategy|title }}</strong><br/>
+    Queried:  <strong>{{ n_queries }}</strong> samples<br/>
+    Test accuracy after retraining: 
+    <strong>{{ accuracy|floatformat:2 }}</strong>
+  </p>
+  <h2>Selected Reviews</h2>
+  <ul>
+    {% for review in selected %}
+      <li>{{ review|truncatechars:200 }}</li>
+    {% endfor %}
+  </ul>
+  <p><a href="{% url 'project2:active_learning' %}">Run again</a></p>
+{% endblock %}

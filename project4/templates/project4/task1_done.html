@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Thank You! Rating Session Complete</h1>
+  
+  <div class="completion-message">
+    <p>You have successfully rated 10 movies. Your ratings have been saved and will help us improve our recommendation system.</p>
+    
+    <h2>Your Ratings Summary:</h2>
+    <div class="ratings-summary">
+      {% for movie_id, rating in ratings.items %}
+        <div class="rating-item">
+          <span class="movie-id">Movie {{ movie_id }}:</span>
+          <span class="rating-value">{{ rating }}/5</span>
+        </div>
+      {% endfor %}
+    </div>
+    
+    <p><strong>Total movies rated: {{ ratings|length }}</strong></p>
+    
+    <div class="navigation">
+      <a href="{% url 'project4:index' %}" class="btn">Return to Project 4 Home</a>
+      <a href="{% url 'project4:task1_intro' %}" class="btn">Start New Rating Session</a>
+    </div>
+  </div>
+{% endblock %}

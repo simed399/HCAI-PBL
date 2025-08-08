@@ -23,6 +23,7 @@ def index(request):
         {"name": "project1", "url_name": "project1:index"},
         {"name": "project2", "url_name": "project2:index"},
         {"name": "project3", "url_name": "project3:index"},
+        {"name": "project4", "url_name": "project4:index"},
     ]
     
     context = { 

@@ -5,7 +5,7 @@ from django.conf import settings
 from .preprocessing import clean_text
 
 # Point at your data folder under the project root
-DATA_DIR = os.path.join(settings.BASE_DIR, 'data', 'imdb_50k')
+DATA_DIR = os.path.join(settings.BASE_DIR, 'imdb_50k')
 
 def load_imdb(split='train'):
     """

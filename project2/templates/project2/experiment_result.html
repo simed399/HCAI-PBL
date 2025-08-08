@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Experiment Results</h1>
+  <p>
+    Strategy: <strong>{{ strategy|title }}</strong><br/>
+    Budget:   <strong>{{ budget }}</strong> labels
+  </p>
+  <img src="{{ image_url }}" alt="Accuracy vs. budget plot">
+  <p><a href="{% url 'project2:experiment' %}">Run another experiment</a></p>
+{% endblock %}

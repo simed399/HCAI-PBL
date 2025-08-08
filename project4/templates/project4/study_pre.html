@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Pre-Study Questionnaire</h1>
+  <form method="post">
+    {% csrf_token %}
+    <label for="age">Age:</label>
+    <input id="age" name="age" type="number" min="18" required><br>
+
+    <label for="gender">Gender:</label>
+    <select id="gender" name="gender">
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
+      <option value="Prefer not to say">Prefer not to say</option>
+    </select><br>
+
+    <label for="familiarity">Familiarity with recommender systems (1 = Not at all, 7 = Very):</label>
+    <input id="familiarity" name="familiarity" type="number" min="1" max="7" required><br>
+
+    <button type="submit">Continue</button>
+  </form>
+{% endblock %}

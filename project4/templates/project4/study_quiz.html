@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Cold-Start Quiz ({{ step }} of {{ budget }})</h1>
+
+  <h2>{{ title }}</h2>
+  {% if show_explanation %}
+    <p><em>{{ explanation }}</em></p>
+  {% endif %}
+
+  <form method="post" action="{% url 'project4:study_quiz' %}">
+    {% csrf_token %}
+    <label for="rating">Your rating (0.5 – 5):</label>
+    <input id="rating" name="rating" type="number" step="0.5" min="0.5" max="5" required>
+    <button type="submit">Submit & Next</button>
+  </form>
+{% endblock %}

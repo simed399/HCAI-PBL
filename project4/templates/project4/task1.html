@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Step {{ step }} of {{ budget }}: Rate this Movie</h1>
+  <h2>{{ title }}</h2>
+  <p><em>{{ explanation }}</em></p>
+
+  <form method="post" action="{% url 'project4:task1_next' %}">
+    {% csrf_token %}
+    <label for="rating">Your rating (0.5 – 5):</label>
+    <input
+      id="rating"
+      type="number"
+      name="rating"
+      step="0.5"
+      min="0.5"
+      max="5"
+      required
+    >
+    <button type="submit">Submit & Next</button>
+  </form>
+{% endblock %}
