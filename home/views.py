@@ -14,7 +14,7 @@ def index(request):
     
     students = [
         {"name": "Mohammed Boutchich", "matriculation": "21968035"},
-        {"name": "Mohamed Miled", "matriculation": "201965712"},
+        {"name": "Mohamed Miled", "matriculation": "21967512"},
         
     ]
     
@@ -24,6 +24,8 @@ def index(request):
         {"name": "project2", "url_name": "project2:index"},
         {"name": "project3", "url_name": "project3:index"},
         {"name": "project4", "url_name": "project4:index"},
+        {"name": "project5", "url_name": "project5:index"},
+        
     ]
     
     context = { 
