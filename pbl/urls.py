@@ -28,4 +28,5 @@ urlpatterns = [
     path('project2/', include('project2.urls')),
     path('project3/', include('project3.urls')),
     path('project4/', include('project4.urls')),
+    path("project5/", include("project5.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

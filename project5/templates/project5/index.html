@@ -1,0 +1,109 @@
+{% load static %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Project 5 — RLHF Mouse</title>
+  <link rel="stylesheet" href="{% static 'project5/app.css' %}">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="header">
+    <h1>Project 5 — Reinforcement Learning with Human Feedback</h1>
+    <p class="sub">We first train a baseline (Task 1), then learn a reward from preferences (Task 2),
+      and finally train with RLHF & KL penalty (Task 3). </p>
+  </header>
+
+  <section class="panel">
+    <div class="taskline"><strong>Task 1.</strong> Train baseline policy with env rewards (REINFORCE).</div>
+    <div class="taskline"><strong>Task 2.</strong> Collect preferences (fake or real) and fit a Bradley–Terry reward.</div>
+    <div class="taskline"><strong>Task 3.</strong> Re-train policy on learned reward + KL to keep it close to baseline.</div>
+
+    <div class="btnrow">
+      <button id="trainBtn" class="btn primary">Train baseline (Task 1)</button>
+      <button id="trainRewardBtn" class="btn">Train reward model (Task 2)</button>
+      <label class="toggle">
+        <input type="checkbox" id="useReal">
+        <span>use my choices (optional — by default a fake user is used)</span>
+    </label>
+
+      <button id="trainRLHFBtn" class="btn">Train RLHF (Task 3)</button>
+      <button id="checkStatusBtn" class="btn ghost">Show status</button>
+    </div>
+    <div id="statusOut" class="status"></div>
+  </section>
+
+  <section class="grids">
+    <div class="grid-card">
+      <div class="grid-header">
+        <h3>Baseline rollout</h3>
+        <div class="pill" id="pillBase">–</div>
+      </div>
+      <div id="gridBase" class="grid"></div>
+      <div class="meta"><span id="metaBase"></span></div>
+      <button id="playBase" class="btn small">▶ Play</button>
+    </div>
+
+    <div class="grid-card">
+      <div class="grid-header">
+        <h3>RLHF rollout</h3>
+        <div class="pill" id="pillRLHF">–</div>
+      </div>
+      <div id="gridRLHF" class="grid"></div>
+      <div class="meta"><span id="metaRLHF"></span></div>
+      <button id="playRLHF" class="btn small">▶ Play</button>
+    </div>
+  </section>
+
+  <section class="compare">
+    <button id="compareBtn" class="btn secondary">▶ Compare (play both)</button>
+  </section>
+
+  <section class="hf-panel">
+    <div class="hf-header">
+      <h3>Collect human preferences</h3>
+    </div>
+
+    <div class="hf-grids">
+      <div class="grid-card">
+        <div class="grid-header"><h4>Trajectory A</h4></div>
+        <div id="gridA" class="grid"></div>
+        <div class="meta"><span id="metaA"></span></div>
+        <button id="chooseA" class="btn small"> Choose A</button>
+      </div>
+
+      <div class="grid-card">
+        <div class="grid-header"><h4>Trajectory B</h4></div>
+        <div id="gridB" class="grid"></div>
+        <div class="meta"><span id="metaB"></span></div>
+        <button id="chooseB" class="btn small"> Choose B</button>
+      </div>
+    </div>
+
+    <div class="hf-actions">
+      <button id="newPair" class="btn">🎲 New pair</button>
+      <span id="prefCount" class="status"></span>
+    </div>
+  </section>
+
+  <section class="legend">
+    <h4>Legend</h4>
+    <ul>
+      <li><span class="swatch mouse">🐭</span> Mouse</li>
+      <li><span class="swatch cheese">🧀</span> Normal cheese</li>
+      <li><span class="swatch org">🧀</span> Organic cheese</li>
+      <li><span class="swatch trap">💀</span> Trap</li>
+      <li><span class="swatch wall">🧱</span> Wall</li>
+      <li><span class="swatch empty"></span> Empty</li>
+    </ul>
+  </section>
+
+</div>
+
+<script>
+  window.STATIC_MAP = {0:"cell empty",1:"cell mouse",2:"cell cheese",3:"cell trap",4:"cell wall",5:"cell org"};
+</script>
+<script src="{% static 'project5/app.js' %}"></script>
+</body>
+</html>
