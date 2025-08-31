@@ -1,16 +1,114 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Project 4: Guided Cold-Start Recommendation</h1>
-  <ul>
-    <li>
-      <a href="{% url 'project4:task1_intro' %}">
-        Task 1 – Cold-Start Quiz
-      </a>
-    </li>
-    <li>
-      <a href="{% url 'project4:study_start' %}">
-        Task 2 – User Study
-      </a>
-    </li>
-  </ul>
-{% endblock %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project 4 · Guided Active Learning Recommender</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'project4/style.css' %}">
+</head>
+<body>
+  <header>
+    <div class="container topbar">
+      <div class="logo">RS</div>
+      <div>
+        <div class="title">Project 4 · Guided AL Recommender</div>
+        <div class="subtitle">Influence of Future Predictions over Active Learning</div>
+      </div>
+      <div class="user-info">
+        <span class="pill">Ready to Start</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- HERO / MAIN INTRO -->
+    <section class="hero">
+      <h1>Influence of Future Predictions over Active Learning of Users' Tastes for Recommender Systems</h1>
+      <p><strong>Goal:</strong> Develop and test an interactive method where a new user enters their tastes. The twist is that unlike standard active learning, the system also shows the user how their answer will affect the recommendations — so the user may choose answers more strategically.</p>
+    </section>
+
+    <!-- PROJECT OVERVIEW -->
+    <section class="card">
+      <h2>Project Overview</h2>
+      <div class="grid cols-2" style="margin-top: 15px;">
+        <div>
+          <h3>About the Recommendation System</h3>
+          <p>This project uses <strong>matrix factorization</strong> on the MovieLens dataset to create personalized movie recommendations. The system learns your preferences through an active learning process that strategically selects which movies to ask you about.</p>
+        </div>
+        <div>
+          <h3>The Cold Start Problem</h3>
+          <p>When a new user registers, the system knows nothing about them. Our approach addresses this by:</p>
+          <ul>
+            <li>Asking you to rate several movies selected by an intelligent algorithm</li>
+            <li><strong>Showing you how your answers will affect the recommendations</strong> (the key innovation!)</li>
+            <li>Allowing you to make more strategic rating choices</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- TASKS -->
+    <section class="grid cols-2">
+      <div class="card">
+        <h3>📖 User Study Guide</h3>
+        <p>Download the comprehensive guide explaining our approach and study methodology.</p>
+        <div class="cta-row" style="margin-top: 15px;">
+          <a href="{% url 'project4:download_study_guide' %}" class="btn primary">
+            📄 Download Study Guide
+          </a>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3>🎬 Interactive Study</h3>
+        <p>Experience the complete user study interface where you'll rate movies and see how your choices influence recommendations.</p>
+        <div class="cta-row" style="margin-top: 15px;">
+          <a href="{% url 'project4:study_start' %}" class="btn primary">
+            🚀 Start User Study
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- STUDY COMPONENTS -->
+    <section class="card">
+      <h2>Study Components</h2>
+      <div class="grid cols-3" style="margin-top: 15px;">
+        <div>
+          <h3>1. Setup Phase</h3>
+          <ul>
+            <li>Consent & demographics</li>
+            <li>Random assignment to study arm</li>
+            <li>Brief instructions</li>
+          </ul>
+        </div>
+        <div>
+          <h3>2. Active Learning</h3>
+          <ul>
+            <li>Rate {{ target_n_ratings|default:10 }} strategically selected movies</li>
+            <li>See impact predictions (experimental group)</li>
+            <li>Build your preference profile</li>
+          </ul>
+        </div>
+        <div>
+          <h3>3. Evaluation</h3>
+          <ul>
+            <li>Rate held-out movies for validation</li>
+            <li>Complete satisfaction survey</li>
+            <li>View personalized results</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- KEY INNOVATION -->
+    <section class="card" style="border-left: 4px solid var(--accent);">
+      <h2>💡 Key Innovation</h2>
+      <p>Unlike traditional recommendation systems that ask for ratings blindly, our system shows you <em>how your rating choices will change your future recommendations</em>, enabling more strategic and informed decision-making.</p>
+    </section>
+
+    <div class="footer">© {{ year|default:2025 }} HCAI · Project 4. Explore the future of human-AI collaboration in recommender systems.</div>
+  </main>
+</body>
+</html>

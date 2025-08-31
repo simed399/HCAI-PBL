@@ -1,18 +1,93 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Post-Study Survey</h1>
-  <form method="post">
-    {% csrf_token %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project 4 · Post-Study Survey</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'project4/style.css' %}">
+</head>
+<body>
+  <header>
+    <div class="container topbar">
+      <div class="logo">RS</div>
+      <div>
+        <div class="title">Project 4 · Guided AL Recommender</div>
+        <div class="subtitle">Post-Study Survey</div>
+      </div>
+      <div class="user-info">
+        <span class="pill">Final Step</span>
+      </div>
+    </div>
+  </header>
 
-    <label for="trust">I trust these recommendations (1 = Strongly disagree, 7 = Strongly agree):</label>
-    <input id="trust" name="trust" type="number" min="1" max="7" required><br>
+  <main class="container">
+    <!-- STEP INFO -->
+    <section class="step-info">
+      <h2>Final Step: Your Experience</h2>
+      <p>Please share your thoughts about the recommendation process you just experienced. Your feedback helps us improve the system.</p>
+    </section>
 
-    <label for="transparency">I understood how my ratings affected recommendations (1 = Strongly disagree, 7 = Strongly agree):</label>
-    <input id="transparency" name="transparency" type="number" min="1" max="7" required><br>
+    <!-- SURVEY FORM -->
+    <section class="card">
+      <h2>Post-Study Survey</h2>
+      
+      <form method="post">
+        {% csrf_token %}
 
-    <label for="satisfaction">Overall satisfaction (1 = Very dissatisfied, 7 = Very satisfied):</label>
-    <input id="satisfaction" name="satisfaction" type="number" min="1" max="7" required><br>
+        <div class="form-row">
+          <label for="trust">I trust these recommendations:</label>
+          <select id="trust" name="trust" required>
+            <option value="">Select your level...</option>
+            <option value="1">1 - Strongly disagree</option>
+            <option value="2">2 - Disagree</option>
+            <option value="3">3 - Somewhat disagree</option>
+            <option value="4">4 - Neutral</option>
+            <option value="5">5 - Somewhat agree</option>
+            <option value="6">6 - Agree</option>
+            <option value="7">7 - Strongly agree</option>
+          </select>
+        </div>
 
-    <button type="submit">Submit Survey</button>
-  </form>
-{% endblock %}
+        <div class="form-row">
+          <label for="transparency">I understood how my ratings affected recommendations:</label>
+          <select id="transparency" name="transparency" required>
+            <option value="">Select your level...</option>
+            <option value="1">1 - Strongly disagree</option>
+            <option value="2">2 - Disagree</option>
+            <option value="3">3 - Somewhat disagree</option>
+            <option value="4">4 - Neutral</option>
+            <option value="5">5 - Somewhat agree</option>
+            <option value="6">6 - Agree</option>
+            <option value="7">7 - Strongly agree</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="satisfaction">Overall satisfaction with the experience:</label>
+          <select id="satisfaction" name="satisfaction" required>
+            <option value="">Select your level...</option>
+            <option value="1">1 - Very dissatisfied</option>
+            <option value="2">2 - Dissatisfied</option>
+            <option value="3">3 - Somewhat dissatisfied</option>
+            <option value="4">4 - Neutral</option>
+            <option value="5">5 - Somewhat satisfied</option>
+            <option value="6">6 - Satisfied</option>
+            <option value="7">7 - Very satisfied</option>
+          </select>
+        </div>
+
+        <div class="cta-row" style="margin-top: 30px;">
+          <button type="submit" class="btn primary">
+            Submit Survey & Continue →
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <div class="footer">
+      Your feedback is anonymous and helps improve future versions of the system.
+    </div>
+  </main>
+</body>
+</html>

@@ -1,9 +1,90 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Study Consent</h1>
-  <p>Welcome! This study will take about 25 minutes. You will rate movies and answer surveys. Your participation is voluntary.</p>
-  <form method="post">
-    {% csrf_token %}
-    <button type="submit">I Consent and Begin Study</button>
-  </form>
-{% endblock %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project 4 · Study Consent</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'project4/style.css' %}">
+</head>
+<body>
+  <header>
+    <div class="container topbar">
+      <div class="logo">RS</div>
+      <div>
+        <div class="title">Project 4 · Guided AL Recommender</div>
+        <div class="subtitle">Study Information & Consent</div>
+      </div>
+      <div class="user-info">
+        <span class="pill">New Participant</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- HERO / STUDY INFO -->
+    <section class="hero">
+      <h1>Movie Recommendation Study</h1>
+      <p>We're studying how showing users the impact of their choices affects recommendation quality and user satisfaction.</p>
+    </section>
+
+    <!-- STUDY INFORMATION -->
+    <section class="card">
+      <h2>Study Information</h2>
+      
+      <div class="grid cols-2" style="margin-top: 15px;">
+        <div>
+          <h3>What you'll do:</h3>
+          <ol>
+            <li>Answer brief demographic questions</li>
+            <li>Rate about 10 strategically selected movies</li>
+            <li>Rate additional movies for evaluation</li>
+            <li>Complete a short survey about your experience</li>
+            <li>View your personalized recommendation results</li>
+          </ol>
+        </div>
+        <div>
+          <h3>Study Details:</h3>
+          <ul>
+            <li><strong>Time commitment:</strong> Approximately 15-20 minutes</li>
+            <li><strong>Your data:</strong> All responses are anonymous and will be used solely for research purposes</li>
+            <li><strong>Participation:</strong> Voluntary - you can withdraw at any time</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONSENT FORM -->
+    <section class="card">
+      <h2>Consent Form</h2>
+      
+      <form method="post" class="consent-form">
+        {% csrf_token %}
+        
+        <div class="form-group">
+          <label for="display_name">Display Name (optional):</label>
+          <input type="text" 
+                 id="display_name" 
+                 name="display_name" 
+                 placeholder="Enter a name for your session (e.g., 'MovieFan123')" 
+                 maxlength="50">
+          <p class="note">This will be shown in your results. Leave blank for a random name.</p>
+        </div>
+        
+        <div class="consent-checkbox">
+          <input type="checkbox" id="consent" required>
+          <span>I understand the study purpose and procedures, and I consent to participate voluntarily. I can withdraw at any time.</span>
+        </div>
+        
+        <button type="submit" class="btn primary" style="width: 100%;">
+          🎬 I Consent and Begin Study
+        </button>
+      </form>
+    </section>
+
+    <div class="footer">
+      Questions? Contact the research team at [research@example.com]
+    </div>
+  </main>
+</body>
+</html>

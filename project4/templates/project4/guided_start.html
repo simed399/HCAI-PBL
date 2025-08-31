@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project 4 · Guided Study Phase</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'project4/style.css' %}">
+</head>
+<body>
+  <header>
+    <div class="container topbar">
+      <div class="logo">RS</div>
+      <div>
+        <div class="title">Project 4 · Movie Recommendation Study</div>
+        <div class="subtitle">Starting Guided Study Phase</div>
+      </div>
+      <div class="user-info">
+        <span class="pill">Phase Transition</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- COMPLETION MESSAGE -->
+    <section class="step-info" style="background: linear-gradient(135deg, #059669, #10b981); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+      <h2>🎉 Standard Study Complete!</h2>
+      <p>
+        <strong>Great job!</strong> You've completed the Standard Study phase.<br>
+        You rated 10 movies and provided your interest ratings for our recommendations.
+      </p>
+    </section>
+
+    <!-- NEXT PHASE INFO -->
+    <section class="card" style="border: 2px solid #3b82f6; background: linear-gradient(135deg, #eff6ff, #dbeafe);">
+      <h2>🎯 Now: Guided Study Phase</h2>
+      <p>
+        <strong>What's different in the Guided Study?</strong><br>
+        In this phase, you'll rate another set of 10 movies, but this time we'll explain 
+        <strong>how each rating affects our recommendation system</strong>. This helps you understand 
+        how the AI learns your preferences.
+      </p>
+      <p>
+        After rating the movies, you'll again see 10 personalized recommendations and rate your interest in watching them.
+      </p>
+      <p>
+        <strong>Goal:</strong> Compare which approach (standard vs. guided) produces better recommendations for your taste!
+      </p>
+      
+      <form method="post" action="{% url 'project4:study_guided_start' %}">
+        {% csrf_token %}
+        <div class="cta-row" style="margin-top: 30px;">
+          <button type="submit" class="btn primary" style="font-size: 18px; padding: 15px 30px;">
+            Start Guided Study Phase →
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <div class="footer">
+      Ready to see how explanations affect recommendation quality?
+    </div>
+  </main>
+</body>
+</html>

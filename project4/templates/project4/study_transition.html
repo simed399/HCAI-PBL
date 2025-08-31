@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project 4 · Recommendations Based on Your Ratings</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'project4/style.css' %}">
+</head>
+<body>
+  <header>
+    <div class="container topbar">
+      <div class="logo">RS</div>
+      <div>
+        <div class="title">Project 4 · Movie Recommendation Study</div>
+        <div class="subtitle">Personalized Recommendations</div>
+      </div>
+      <div class="user-info">
+        <span class="pill">Recommendations Ready</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- COMPLETION MESSAGE -->
+    <section class="step-info" style="background: linear-gradient(135deg, #059669, #10b981); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+      <h2>🎉 Standard Study Complete!</h2>
+      <p>
+        <strong>Great job!</strong> You've completed the Standard Study phase by rating {{ standard_count }} movies.<br>
+        Based on your ratings, our system has generated {{ guided_count }} personalized movie recommendations for you.
+      </p>
+    </section>
+
+    <!-- RECOMMENDATIONS -->
+    <section class="card">
+      <h2>🎬 Your Personalized Movie Recommendations</h2>
+      <p>These {{ guided_count }} movies were selected specifically for you based on your rating patterns from the standard study:</p>
+      
+      <div class="recommendations-list" style="margin: 20px 0;">
+        {% for rec in recommendations %}
+        <div class="recommendation-item" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: #f8fafc;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h4 style="margin: 0 0 5px 0; color: #1e40af;">{{ rec.title }}</h4>
+              <p style="margin: 0; color: #64748b; font-size: 14px;">
+                <strong>Genres:</strong> {{ rec.genres }} | 
+                <strong>Year:</strong> {{ rec.year }} |
+                <strong>Predicted Rating:</strong> {{ rec.score|floatformat:2 }} ⭐
+              </p>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- NEXT PHASE INFO -->
+    <section class="card" style="border: 2px solid #3b82f6; background: linear-gradient(135deg, #eff6ff, #dbeafe);">
+      <h2>🎯 Next: Guided Study Phase</h2>
+      <p>
+        <strong>What happens next?</strong><br>
+        In the Guided Study phase, you'll rate these recommended movies <strong>one by one</strong>. 
+        Each movie will be presented on a separate page with explanations about why it was recommended for you.
+      </p>
+      <p>
+        <strong>Important:</strong> This phase starts fresh - we'll compare how well our recommendations match your actual preferences versus the standard approach.
+      </p>
+      
+      <form method="post" action="{% url 'project4:study_transition' %}">
+        {% csrf_token %}
+        <div class="cta-row" style="margin-top: 30px;">
+          <button type="submit" class="btn primary" style="font-size: 18px; padding: 15px 30px;">
+            Start Guided Study Phase →
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <div class="footer">
+      Ready to see how well our recommendations match your taste? Let's find out!
+    </div>
+  </main>
+</body>
+</html>

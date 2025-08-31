@@ -60,3 +60,38 @@ def infer_user_vector(ratings_dict, lamb=0.1):
     b = Vj.T.dot(rj)
     u = np.linalg.solve(A, b)
     return u
+
+def predict_ratings(user_vector, V, movie_ids):
+    """Predict ratings for all movies given user vector"""
+    predictions = np.dot(V, user_vector)
+    return predictions
+
+def get_recommendations(user_vector, V, movie_ids, n=10, exclude_ids=None):
+    """Get top N movie recommendations for a user"""
+    if exclude_ids is None:
+        exclude_ids = []
+    
+    predictions = predict_ratings(user_vector, V, movie_ids)
+    
+    # Create array of indices and filter out excluded movies
+    valid_indices = []
+    for i, movie_id in enumerate(movie_ids):
+        if movie_id not in exclude_ids:
+            valid_indices.append(i)
+    
+    if len(valid_indices) == 0:
+        return [], []
+    
+    # Get predictions for valid movies
+    valid_predictions = predictions[valid_indices]
+    valid_movie_ids = movie_ids[valid_indices]
+    
+    # Sort by prediction score (descending)
+    sorted_indices = np.argsort(valid_predictions)[::-1]
+    
+    # Return top N
+    top_n_indices = sorted_indices[:n]
+    recommended_movie_ids = valid_movie_ids[top_n_indices]
+    recommended_scores = valid_predictions[top_n_indices]
+    
+    return recommended_movie_ids, recommended_scores

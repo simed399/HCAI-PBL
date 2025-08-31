@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project 4 · Rate Your Interest</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'project4/style.css' %}">
+</head>
+<body>
+  <header>
+    <div class="container topbar">
+      <div class="logo">RS</div>
+      <div>
+        <div class="title">Project 4 · Movie Recommendation Study</div>
+        <div class="subtitle">{{ phase_name }} - Rate Your Interest</div>
+      </div>
+      <div class="user-info">
+        <span class="pill">{{ phase_name }}</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- INSTRUCTIONS -->
+    <section class="step-info">
+      <h2>📋 Rate Your Interest in These Recommended Movies</h2>
+      <p>
+        Based on your movie ratings, our system has generated these {{ recommendations|length }} personalized recommendations for you.<br>
+        <strong>Please rate how interested you are in watching each movie</strong> on a scale from 0.5 to 5 stars.
+      </p>
+    </section>
+
+    <!-- RATING FORM -->
+    <section class="card">
+      <h2>🎬 Your Personalized Movie Recommendations</h2>
+      
+      <form method="post">
+        {% csrf_token %}
+        
+        <div class="recommendations-grid" style="display: grid; gap: 15px; margin: 20px 0;">
+        {% for rec in recommendations %}
+          <div class="recommendation-item" style="border: 1px solid var(--border); border-radius: 12px; padding: 20px; background: linear-gradient(180deg, rgba(26,30,54,.8), rgba(19,22,41,.8)); box-shadow: 0 4px 12px rgba(0,0,0,.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+              <div style="flex: 1;">
+                <h4 style="margin: 0 0 8px 0; color: var(--text); font-size: 16px; font-weight: 600;">{{ rec.title }}</h4>
+                <p style="margin: 0; color: var(--muted); font-size: 14px;">
+                  <strong>Genres:</strong> {{ rec.genres }} | <strong>Year:</strong> {{ rec.year }}
+                </p>
+              </div>
+            </div>
+            
+            <div class="rating-input" style="margin-top: 15px;">
+              <label for="interest_{{ rec.movie_id }}" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text); font-size: 14px;">
+                How interested are you in watching this movie? (0.5 – 5 stars):
+              </label>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <input 
+                  id="interest_{{ rec.movie_id }}" 
+                  name="interest_{{ rec.movie_id }}" 
+                  type="number" 
+                  step="0.5" 
+                  min="0.5" 
+                  max="5" 
+                  required
+                  style="width: 120px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 14px;"
+                >
+                <span style="color: var(--accent); font-size: 16px;">⭐</span>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+        </div>
+
+        <div class="cta-row" style="margin-top: 30px; text-align: center;">
+          <button type="submit" class="btn primary" style="font-size: 18px; padding: 15px 30px;">
+            Submit Interest Ratings & Continue →
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <div class="footer">
+      Rate how much you would be interested in watching these recommended movies.
+    </div>
+  </main>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Project 4 · Cold-Start Quiz</title>
+  <title>Project 4 · Standard Study</title>
   {% load static %}
   <link rel="stylesheet" href="{% static 'project4/style.css' %}">
 </head>
@@ -12,10 +12,11 @@
     <div class="container topbar">
       <div class="logo">RS</div>
       <div>
-        <div class="title">Project 4 · Guided AL Recommender</div>
-        <div class="subtitle">Cold-Start Quiz - Step {{ step }} of {{ budget }}</div>
+        <div class="title">Project 4 · Movie Recommendation Study</div>
+        <div class="subtitle">Standard Study Phase - Step {{ step }} of {{ budget }}</div>
       </div>
       <div class="user-info">
+        <span class="pill">Standard Study</span>
         <span class="pill">{{ step }}/{{ budget }} Movies</span>
       </div>
     </div>
@@ -24,16 +25,20 @@
   <main class="container">
     <!-- STEP INFO -->
     <section class="step-info">
-      <h2>Step {{ step }} of {{ budget }}: Rate this Movie</h2>
-      <p>Please rate how much you think you would like this movie on a scale from 0.5 to 5 stars.</p>
+      <h2>Standard Study: Step {{ step }} of {{ budget }}</h2>
+      <p>
+        <strong>Welcome to the Standard Study phase!</strong><br>
+        Please rate how much you think you would like this movie on a scale from 0.5 to 5 stars.
+        This phase helps us establish your basic movie preferences.
+      </p>
     </section>
 
     <!-- MOVIE RATING FORM -->
     <section class="card">
       <h2>{{ title }}</h2>
-      {% if show_explanation %}
-        <p class="note"><em>{{ explanation }}</em></p>
-      {% endif %}
+      <p class="note">
+        <em>Please rate this movie based on your personal taste and preferences.</em>
+      </p>
 
       <form method="post" action="{% url 'project4:study_quiz' %}">
         {% csrf_token %}
@@ -52,7 +57,7 @@
     </section>
 
     <div class="footer">
-      Rate based on your personal taste and movie preferences.
+      Standard Study: Rate based on your personal taste and movie preferences.
     </div>
   </main>
 </body>

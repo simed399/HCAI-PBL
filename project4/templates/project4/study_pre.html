@@ -1,22 +1,80 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Pre-Study Questionnaire</h1>
-  <form method="post">
-    {% csrf_token %}
-    <label for="age">Age:</label>
-    <input id="age" name="age" type="number" min="18" required><br>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project 4 · Pre-Study Questionnaire</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'project4/style.css' %}">
+</head>
+<body>
+  <header>
+    <div class="container topbar">
+      <div class="logo">RS</div>
+      <div>
+        <div class="title">Project 4 · Guided AL Recommender</div>
+        <div class="subtitle">Pre-Study Questionnaire</div>
+      </div>
+      <div class="user-info">
+        <span class="pill">Step 1 of 5</span>
+      </div>
+    </div>
+  </header>
 
-    <label for="gender">Gender:</label>
-    <select id="gender" name="gender">
-      <option value="Male">Male</option>
-      <option value="Female">Female</option>
-      <option value="Other">Other</option>
-      <option value="Prefer not to say">Prefer not to say</option>
-    </select><br>
+  <main class="container">
+    <!-- STEP INFO -->
+    <section class="step-info">
+      <h2>Step 1: Background Information</h2>
+      <p>Please provide some basic information about yourself. This helps us understand our participants and improve our research.</p>
+    </section>
 
-    <label for="familiarity">Familiarity with recommender systems (1 = Not at all, 7 = Very):</label>
-    <input id="familiarity" name="familiarity" type="number" min="1" max="7" required><br>
+    <!-- QUESTIONNAIRE FORM -->
+    <section class="card">
+      <h2>Pre-Study Questionnaire</h2>
+      
+      <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-row">
+          <label for="age">Age:</label>
+          <input id="age" name="age" type="number" min="18" required>
+        </div>
 
-    <button type="submit">Continue</button>
-  </form>
-{% endblock %}
+        <div class="form-row">
+          <label for="gender">Gender:</label>
+          <select id="gender" name="gender">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+            <option value="Prefer not to say">Prefer not to say</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="familiarity">Familiarity with recommender systems:</label>
+          <select id="familiarity" name="familiarity" required>
+            <option value="">Select your level...</option>
+            <option value="1">1 - Not at all familiar</option>
+            <option value="2">2 - Slightly familiar</option>
+            <option value="3">3 - Somewhat familiar</option>
+            <option value="4">4 - Moderately familiar</option>
+            <option value="5">5 - Familiar</option>
+            <option value="6">6 - Very familiar</option>
+            <option value="7">7 - Extremely familiar</option>
+          </select>
+        </div>
+
+        <div class="cta-row" style="margin-top: 30px;">
+          <button type="submit" class="btn primary">
+            Continue to Study →
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <div class="footer">
+      All information is collected anonymously for research purposes only.
+    </div>
+  </main>
+</body>
+</html>

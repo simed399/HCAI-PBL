@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project 4 · Guided Study</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'project4/style.css' %}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header>
+    <div class="container topbar">
+      <div class="logo">RS</div>
+      <div>
+        <div class="title">Project 4 · Movie Recommendation Study</div>
+        <div class="subtitle">Guided Study Phase - Step {{ step }} of {{ budget }}</div>
+      </div>
+      <div class="user-info">
+        <span class="pill">Guided Study</span>
+        <span class="pill">{{ step }}/{{ budget }} Movies</span>
+        <span class="pill">Overall: {{ total_step }}/{{ total_budget }}</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- TRANSITION MESSAGE (only show on first guided question) -->
+    {% if step == 1 %}
+    <section class="step-info" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+      <h2>🎯 Welcome to the Guided Study Phase!</h2>
+      <p>
+        <strong>Congratulations!</strong> You've completed the Standard Study phase.<br>
+        Now we're starting the <strong>Guided Study phase</strong> where our AI system will provide explanations 
+        for why each movie is selected for you to rate. This helps improve the recommendation quality.
+      </p>
+    </section>
+    {% endif %}
+
+    <!-- TWO COLUMN LAYOUT -->
+    <div class="grid cols-2" style="align-items: start;">
+      
+      <!-- LEFT COLUMN: MOVIE RATING -->
+      <div>
+        <!-- STEP INFO -->
+        <section class="step-info">
+          <h2>Guided Study: Step {{ step }} of {{ budget }}</h2>
+          <p>
+            Please rate how much you think you would like this movie. 
+            Our system has selected this movie specifically for you based on your previous ratings.
+          </p>
+        </section>
+
+        <!-- MOVIE RATING FORM -->
+        <section class="card">
+          <h2>{{ title }}</h2>
+          
+          <!-- AI EXPLANATION -->
+          <div class="explanation-box" style="background: #f8fafc; border-left: 4px solid #3b82f6; padding: 15px; margin: 15px 0; border-radius: 4px;">
+            <h4 style="margin-top: 0; color: #1e40af;">🤖 Why this movie was recommended:</h4>
+            <p style="margin-bottom: 0;"><em>{{ explanation }}</em></p>
+            {% if predicted_score %}
+            <p style="margin: 10px 0 0 0; font-weight: bold; color: #059669;">
+              💡 Our prediction: {{ predicted_score }} stars
+            </p>
+            {% endif %}
+          </div>
+
+          <form method="post" action="{% url 'project4:study_guided' %}">
+            {% csrf_token %}
+            
+            <div class="rating-input">
+              <label for="rating">Your rating (0.5 – 5 stars):</label>
+              <input id="rating" name="rating" type="number" step="0.5" min="0.5" max="5" required>
+            </div>
+
+            <div class="cta-row" style="margin-top: 30px;">
+              <button type="submit" class="btn primary">
+                Submit & Next →
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <!-- RIGHT COLUMN: SPIDER CHART -->
+      <div>
+        <section class="card">
+          <h3 style="margin-top: 0; color: #1e40af;">📊 Your Genre Preferences</h3>
+          
+          <div class="spider-message" style="text-align: center; margin-bottom: 20px; padding: 15px; background: #f0f9ff; border-radius: 6px; color: #0c4a6e;">
+            <p style="margin: 0; font-weight: 500;">{{ spider_message }}</p>
+          </div>
+          
+          {% if show_spider_chart %}
+          <div class="chart-container" style="position: relative; height: 350px; width: 100%;">
+            <canvas id="genreSpiderChart"></canvas>
+          </div>
+          {% else %}
+          <div class="empty-chart" style="height: 350px; display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 8px;">
+            <div style="text-align: center; color: #64748b;">
+              <div style="font-size: 48px; margin-bottom: 10px;">📈</div>
+              <p style="margin: 0; font-weight: 500;">Spider Chart Coming Soon!</p>
+              <p style="margin: 5px 0 0 0; font-size: 14px;">Rate your first movie to see your preferences</p>
+            </div>
+          </div>
+          {% endif %}
+          
+          <div class="chart-explanation" style="margin-top: 15px; padding: 12px; background: #fefce8; border-radius: 6px; font-size: 14px; color: #713f12;">
+            <p style="margin: 0;"><strong>💡 How to read this chart:</strong> Higher values indicate genres you're more likely to receive recommendations for, based on your current ratings.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="footer">
+      Guided Study: Rate based on your personal taste. The explanation above shows why this movie was selected for you.
+    </div>
+  </main>
+
+  {% if show_spider_chart %}
+  <script>
+    // Genre preferences data from Django
+    const genreData = {{ genre_preferences_json|safe }};
+    
+    // Prepare data for Chart.js radar chart
+    const labels = Object.keys(genreData);
+    const data = Object.values(genreData);
+    
+    // Define vibrant colors for each genre category
+    const genreColors = {
+      'Action': '#ef4444',      // Red
+      'Adventure': '#f59e0b',   // Orange
+      'Comedy': '#eab308',      // Yellow
+      'Drama': '#22c55e',       // Green
+      'Horror': '#8b5cf6',      // Purple
+      'Romance': '#ec4899',     // Pink
+      'Sci-Fi': '#06b6d4',      // Cyan
+      'Thriller': '#f97316'     // Orange-red
+    };
+    
+    // Create gradient colors for the chart area
+    const pointColors = labels.map(label => genreColors[label] || '#64748b');
+    const borderColors = pointColors.map(color => color);
+    const backgroundColors = pointColors.map(color => color + '40'); // Add transparency
+    
+    // Create the spider/radar chart
+    const ctx = document.getElementById('genreSpiderChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Recommendation Likelihood (%)',
+          data: data,
+          backgroundColor: 'rgba(93, 212, 198, 0.2)', // Teal with transparency
+          borderColor: '#5dd4c6', // Teal border
+          borderWidth: 3,
+          pointBackgroundColor: pointColors, // Different color for each point
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 3,
+          pointRadius: 6,
+          pointHoverRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: 'rgba(15, 18, 32, 0.9)',
+            titleColor: '#e5e7eb',
+            bodyColor: '#e5e7eb',
+            borderColor: '#5dd4c6',
+            borderWidth: 1,
+            callbacks: {
+              title: function(context) {
+                return context[0].label + ' Genre';
+              },
+              label: function(context) {
+                return context.parsed.r.toFixed(1) + '% recommendation likelihood';
+              }
+            }
+          }
+        },
+        scales: {
+          r: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              stepSize: 20,
+              callback: function(value) {
+                return value + '%';
+              },
+              color: '#9ca3af', // Light gray for better visibility
+              font: {
+                size: 11
+              }
+            },
+            grid: {
+              color: 'rgba(156, 163, 175, 0.3)' // Semi-transparent gray grid
+            },
+            pointLabels: {
+              color: '#e5e7eb', // Light gray for genre labels
+              font: {
+                size: 13,
+                weight: 'bold'
+              }
+            }
+          }
+        }
+      }
+    });
+  </script>
+  {% endif %}
+</body>
+</html>

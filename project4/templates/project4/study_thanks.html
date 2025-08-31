@@ -1,6 +1,46 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Thank You!</h1>
-  <p>Your responses have been recorded. We appreciate your time.</p>
-  <p>You may now close this window.</p>
-{% endblock %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project 4 · Thank You</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'project4/style.css' %}">
+</head>
+<body>
+  <header>
+    <div class="container topbar">
+      <div class="logo">RS</div>
+      <div>
+        <div class="title">Project 4 · Guided AL Recommender</div>
+        <div class="subtitle">Study Complete</div>
+      </div>
+      <div class="user-info">
+        <span class="pill positive">Complete!</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- COMPLETION MESSAGE -->
+    <section class="hero">
+      <h1>Thank You! 🎉</h1>
+      <p>Your responses have been recorded. We appreciate your time and participation in our research.</p>
+    </section>
+
+    <section class="card">
+      <h2>Study Complete</h2>
+      <p>Your participation helps us improve recommendation systems for future users. Thank you for contributing to our research!</p>
+      
+      <div class="cta-row" style="margin-top: 20px;">
+        <a href="{% url 'project4:index' %}" class="btn primary">Return to Project Home</a>
+        <a href="{% url 'project4:study_start' %}" class="btn">Participate Again</a>
+      </div>
+    </section>
+
+    <div class="footer">
+      You may now close this window or continue exploring our research.
+    </div>
+  </main>
+</body>
+</html>

@@ -1,25 +1,61 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Thank You! Rating Session Complete</h1>
-  
-  <div class="completion-message">
-    <p>You have successfully rated 10 movies. Your ratings have been saved and will help us improve our recommendation system.</p>
-    
-    <h2>Your Ratings Summary:</h2>
-    <div class="ratings-summary">
-      {% for movie_id, rating in ratings.items %}
-        <div class="rating-item">
-          <span class="movie-id">Movie {{ movie_id }}:</span>
-          <span class="rating-value">{{ rating }}/5</span>
-        </div>
-      {% endfor %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project 4 · Rating Session Complete</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'project4/style.css' %}">
+</head>
+<body>
+  <header>
+    <div class="container topbar">
+      <div class="logo">RS</div>
+      <div>
+        <div class="title">Project 4 · Guided AL Recommender</div>
+        <div class="subtitle">Rating Session Complete</div>
+      </div>
+      <div class="user-info">
+        <span class="pill positive">{{ ratings|length }} Rated</span>
+      </div>
     </div>
-    
-    <p><strong>Total movies rated: {{ ratings|length }}</strong></p>
-    
-    <div class="navigation">
-      <a href="{% url 'project4:index' %}" class="btn">Return to Project 4 Home</a>
-      <a href="{% url 'project4:task1_intro' %}" class="btn">Start New Rating Session</a>
+  </header>
+
+  <main class="container">
+    <!-- COMPLETION MESSAGE -->
+    <section class="hero">
+      <h1>Thank You! Rating Session Complete 🎬</h1>
+      <p>You have successfully rated 10 movies. Your ratings have been saved and will help us improve our recommendation system.</p>
+    </section>
+
+    <!-- RATINGS SUMMARY -->
+    <section class="card">
+      <h2>Your Ratings Summary</h2>
+      
+      <div class="grid cols-2" style="margin-top: 15px;">
+        {% for movie_id, rating in ratings.items %}
+          <div class="pill">
+            Movie {{ movie_id }}: {{ rating }}/5 stars
+          </div>
+        {% endfor %}
+      </div>
+      
+      <div class="divider"></div>
+      <p><strong>Total movies rated: {{ ratings|length }}</strong></p>
+    </section>
+
+    <!-- NAVIGATION -->
+    <section class="card">
+      <h2>What's Next?</h2>
+      <div class="cta-row">
+        <a href="{% url 'project4:index' %}" class="btn primary">Return to Project 4 Home</a>
+        <a href="{% url 'project4:task1_intro' %}" class="btn">Start New Rating Session</a>
+      </div>
+    </section>
+
+    <div class="footer">
+      Thank you for contributing to our research on recommendation systems.
     </div>
-  </div>
-{% endblock %}
+  </main>
+</body>
+</html>

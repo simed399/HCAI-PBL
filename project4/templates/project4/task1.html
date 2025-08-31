@@ -1,21 +1,57 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Step {{ step }} of {{ budget }}: Rate this Movie</h1>
-  <h2>{{ title }}</h2>
-  <p><em>{{ explanation }}</em></p>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project 4 · Active Learning Task</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'project4/style.css' %}">
+</head>
+<body>
+  <header>
+    <div class="container topbar">
+      <div class="logo">RS</div>
+      <div>
+        <div class="title">Project 4 · Guided AL Recommender</div>
+        <div class="subtitle">Active Learning - Step {{ step }} of {{ budget }}</div>
+      </div>
+      <div class="user-info">
+        <span class="pill">{{ step }}/{{ budget }} Ratings</span>
+      </div>
+    </div>
+  </header>
 
-  <form method="post" action="{% url 'project4:task1_next' %}">
-    {% csrf_token %}
-    <label for="rating">Your rating (0.5 – 5):</label>
-    <input
-      id="rating"
-      type="number"
-      name="rating"
-      step="0.5"
-      min="0.5"
-      max="5"
-      required
-    >
-    <button type="submit">Submit & Next</button>
-  </form>
-{% endblock %}
+  <main class="container">
+    <!-- STEP INFO -->
+    <section class="step-info">
+      <h2>Step {{ step }} of {{ budget }}: Rate this Movie</h2>
+      <p>Rate this strategically selected movie. Your rating will help improve future recommendations.</p>
+    </section>
+
+    <!-- MOVIE RATING FORM -->
+    <section class="card">
+      <h2>{{ title }}</h2>
+      <p class="note"><em>{{ explanation }}</em></p>
+
+      <form method="post" action="{% url 'project4:task1_next' %}">
+        {% csrf_token %}
+        
+        <div class="rating-input">
+          <label for="rating">Your rating (0.5 – 5 stars):</label>
+          <input id="rating" type="number" name="rating" step="0.5" min="0.5" max="5" required>
+        </div>
+
+        <div class="cta-row" style="margin-top: 30px;">
+          <button type="submit" class="btn primary">
+            Submit & Next →
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <div class="footer">
+      Rate based on your personal taste and movie preferences.
+    </div>
+  </main>
+</body>
+</html>

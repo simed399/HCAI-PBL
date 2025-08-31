@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project 4 · Study Results</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'project4/style.css' %}">
+</head>
+<body>
+  <header>
+    <div class="container topbar">
+      <div class="logo">RS</div>
+      <div>
+        <div class="title">Project 4 · Movie Recommendation Study</div>
+        <div class="subtitle">Study Results & Comparison</div>
+      </div>
+      <div class="user-info">
+        <span class="pill">User: <strong>{{ user_display_name|default:"Participant" }}</strong></span>
+        <a class="btn" href="{% url 'project4:study_start' %}">Restart Study</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- HERO -->
+    <section class="hero">
+      <h1>Study Complete! 🎬</h1>
+      <p>Thank you for participating in our movie recommendation study. Here's what we learned and how the different approaches compared.</p>
+    </section>
+
+    <!-- WHAT WE LEARNED ABOUT YOUR PREFERENCES -->
+    <section class="card">
+      <h2>🎯 What We Learned About Your Preferences</h2>
+      <div class="grid cols-2" style="gap: 30px; margin-top: 20px;">
+        <div>
+          <h3 style="color: #10b981; margin-bottom: 10px;">Standard Study Analysis</h3>
+          <p><strong>Movies you rated:</strong> {{ standard_count }} movies</p>
+          <p><strong>Preferred genres:</strong> {{ standard_preferences.likes|default:"Drama, Action, Sci-Fi" }}</p>
+          <p><strong>Less preferred:</strong> {{ standard_preferences.dislikes|default:"Horror, Comedy" }}</p>
+        </div>
+        <div>
+          <h3 style="color: #3b82f6; margin-bottom: 10px;">Guided Study Analysis</h3>
+          <p><strong>Movies you rated:</strong> {{ guided_count }} movies</p>
+          <p><strong>Preferred genres:</strong> {{ guided_preferences.likes|default:"Drama, Action, Sci-Fi" }}</p>
+          <p><strong>Less preferred:</strong> {{ guided_preferences.dislikes|default:"Horror, Comedy" }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECOMMENDATION COMPARISON -->
+    <section class="card">
+      <h2>📊 Recommendation Performance Comparison</h2>
+      <div class="grid cols-2" style="gap: 30px; margin-top: 20px;">
+        <div class="comparison-box" style="border: 2px solid #10b981; border-radius: 8px; padding: 20px; background: #f0fdf4;">
+          <h3 style="color: #059669; margin-top: 0;">📺 Standard Study Results</h3>
+          <div class="stats" style="margin-top: 15px;">
+            <div class="stat">
+              <div class="label">Movies Recommended</div>
+              <div class="value">{{ standard_interest_count|default:"10" }}</div>
+            </div>
+            <div class="stat">
+              <div class="label">Average Interest Rating</div>
+              <div class="value">{{ standard_interest_avg|default:"—" }} ⭐</div>
+            </div>
+            <div class="stat">
+              <div class="label">Total Interest Points</div>
+              <div class="value">{{ standard_interest_total|default:"—" }}</div>
+            </div>
+          </div>
+          <p style="margin-top: 15px; font-size: 14px; color: #065f46;">Based on your initial movie ratings without explanations.</p>
+        </div>
+        
+        <div class="comparison-box" style="border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; background: #eff6ff;">
+          <h3 style="color: #1d4ed8; margin-top: 0;">🤖 Guided Study Results</h3>
+          <div class="stats" style="margin-top: 15px;">
+            <div class="stat">
+              <div class="label">Movies Recommended</div>
+              <div class="value">{{ guided_interest_count|default:"10" }}</div>
+            </div>
+            <div class="stat">
+              <div class="label">Average Interest Rating</div>
+              <div class="value">{{ guided_interest_avg|default:"—" }} ⭐</div>
+            </div>
+            <div class="stat">
+              <div class="label">Total Interest Points</div>
+              <div class="value">{{ guided_interest_total|default:"—" }}</div>
+            </div>
+          </div>
+          <p style="margin-top: 15px; font-size: 14px; color: #1e3a8a;">Based on your ratings with AI explanations for each movie.</p>
+        </div>
+      </div>
+      
+      <!-- WINNER ANNOUNCEMENT -->
+      <div class="winner-box" style="margin-top: 30px; text-align: center; padding: 25px; border-radius: 12px; {% if better_recommendation_phase == 'Guided' %}background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 2px solid #3b82f6;{% else %}background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 2px solid #10b981;{% endif %}">
+        <h3 style="margin-top: 0; font-size: 24px;">🏆 Winner: {{ better_recommendation_phase|default:"Guided" }} Study Approach</h3>
+        <p style="font-size: 18px; margin: 10px 0;">Improvement: {{ interest_improvement|default:"+0.3" }} stars on average</p>
+        <p style="color: #64748b;">The {{ better_recommendation_phase|default:"guided" }} approach generated recommendations you found more interesting!</p>
+      </div>
+    </section>
+
+    <!-- METHODOLOGY EXPLANATION -->
+    <section class="card">
+      <h2>📋 How We Measured Success</h2>
+      <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #64748b;">
+        <p><strong>Rating Phase:</strong> In each study phase, you rated 10 movies to help us understand your preferences.</p>
+        <p><strong>Recommendation Phase:</strong> Based on those ratings, we recommended 10 new movies and asked how interested you'd be in watching them.</p>
+        <p><strong>Comparison Metric:</strong> We compared the total interest ratings you gave to our recommendations in each phase to determine which approach works better for you.</p>
+        <p><strong>Key Difference:</strong> The guided study provided explanations for why each movie was selected, helping you make more informed ratings.</p>
+      </div>
+    </section>
+
+    <!-- ACTIONS -->
+    <section class="card">
+      <h2>What's Next?</h2>
+      <p>Thank you for participating! Your data helps us improve recommendation systems for future users.</p>
+      <div class="cta-row" style="margin-top: 20px;">
+        <a class="btn primary" href="{% url 'project4:study_start' %}">Start New Study</a>
+        <a class="btn" href="{% url 'project4:index' %}">Return to Project Home</a>
+      </div>
+    </section>
+
+    <div class="footer">© {{ year|default:2025 }} HCAI · Project 4 Study Results</div>
+  </main>
+</body>
+</html>

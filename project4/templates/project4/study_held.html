@@ -1,17 +1,58 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Additional Movie Ratings</h1>
-  <p>Please rate the following movies to help us evaluate our system:</p>
-  <form method="post">
-    {% csrf_token %}
-    <ul>
-    {% for movie in movies %}
-      <li>
-        <strong>{{ movie.title }}</strong>
-        <input name="r{{ movie.id }}" type="number" step="0.5" min="0.5" max="5" required>
-      </li>
-    {% endfor %}
-    </ul>
-    <button type="submit">Continue</button>
-  </form>
-{% endblock %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project 4 · Additional Ratings</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'project4/style.css' %}">
+</head>
+<body>
+  <header>
+    <div class="container topbar">
+      <div class="logo">RS</div>
+      <div>
+        <div class="title">Project 4 · Guided AL Recommender</div>
+        <div class="subtitle">Additional Movie Ratings</div>
+      </div>
+      <div class="user-info">
+        <span class="pill">Validation Phase</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- STEP INFO -->
+    <section class="step-info">
+      <h2>Additional Movie Ratings</h2>
+      <p>Please rate the following movies to help us evaluate our system. This helps us understand how well our recommendations work.</p>
+    </section>
+
+    <!-- RATING FORM -->
+    <section class="card">
+      <h2>Rate These Movies</h2>
+      
+      <form method="post">
+        {% csrf_token %}
+        
+        {% for movie in movies %}
+          <div class="form-row">
+            <label for="r{{ movie.id }}">{{ movie.title }}:</label>
+            <input name="r{{ movie.id }}" type="number" step="0.5" min="0.5" max="5" required>
+          </div>
+        {% endfor %}
+
+        <div class="cta-row" style="margin-top: 30px;">
+          <button type="submit" class="btn primary">
+            Submit Ratings & Continue →
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <div class="footer">
+      Rate based on your personal taste and movie preferences.
+    </div>
+  </main>
+</body>
+</html>
