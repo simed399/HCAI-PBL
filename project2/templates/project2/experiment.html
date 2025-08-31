@@ -1,18 +1,396 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Task 3: AL Experiment &amp; Evaluation</h1>
-  <form method="post" action="{% url 'project2:run_experiment' %}">
-    {% csrf_token %}
-    <label>Strategy:
-      <select name="strategy">
-        <option value="uncertainty">Uncertainty Sampling</option>
-        <option value="margin">Margin Sampling</option>
-        <option value="entropy">Entropy Sampling</option>
-      </select>
-    </label><br/>
-    <label>Budget (labels to acquire):
-      <input type="number" name="budget" value="50" min="1" max="5000"/>
-    </label><br/>
-    <button type="submit">Run Experiment</button>
-  </form>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Task 3: Experiment & Evaluation - Project 2</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #171a2b;
+      --muted: #a9b0c3;
+      --text: #e9ecf2;
+      --accent: #6aa2ff;
+      --accent-2: #6effc6;
+      --border: #23263a;
+      --danger: #ff7676;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 80% -10%, #1a1f35 0%, var(--bg) 60%), var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.4;
+    }
+
+    .wrap {
+      max-width: 1000px;
+      margin: 32px auto 72px;
+      padding: 0 20px;
+    }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+
+    h1 { font-size: 28px; margin: 0; letter-spacing: 0.3px; }
+    .subtle { color: var(--muted); font-size: 14px; }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    h2 { margin: 0 0 12px; font-size: 22px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 8px; color: var(--muted);
+      text-decoration: none; margin-bottom: 14px; font-size: 14px;
+    }
+    .back:hover { color: var(--text); }
+
+    .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+
+    .btn {
+      appearance: none; border: 1px solid var(--border); background: var(--card); color: var(--text);
+      padding: 10px 14px; border-radius: 12px; font-weight: 600; letter-spacing: 0.2px;
+      cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+      text-decoration: none; display: inline-block;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: #2b3150; box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
+    .btn.primary { background: linear-gradient(180deg, #1e264b, #1a2141); border-color: #2b3150; }
+
+    select, input[type="number"] {
+      background: var(--card); border: 1px solid var(--border); color: var(--text);
+      padding: 10px 12px; border-radius: 10px; min-width: 220px;
+    }
+
+    .muted-box { color: var(--muted); border: 1px dashed var(--border); border-radius: 12px; padding: 12px; }
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #1d233b; border: 1px solid #2b3150; font-size: 12px; color: var(--muted); }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+    /* Progress Bar Styles */
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 4px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .mode-selection {
+      text-align: center;
+    }
+
+    .mode-buttons {
+      display: inline-flex;
+      gap: 2px;
+      background: var(--border);
+      border-radius: 12px;
+      padding: 4px;
+    }
+
+    .mode-btn {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 120ms ease;
+    }
+
+    .mode-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .form-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 16px 0;
+    }
+
+    .form-section h3 {
+      margin: 0 0 16px;
+      color: var(--text);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    footer { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
+
+    @media (max-width: 760px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Task 3 · Active Learning Evaluation</h1>
+        <div class="subtle">IMDB 50k · Simulated vs. Human Labeling · <span class="pill">Evaluation</span></div>
+      </div>
+      <a href="{% url 'project2:index' %}" class="btn">🏠 Home</a>
+    </header>
+
+    <a class="back" href="{% url 'project2:index' %}">← Back to Home</a>
+    <div class="panel">
+      <h2>Choose Evaluation Mode</h2>
+      <p class="subtle" style="margin:8px 0 18px">Test active learning with simulated users or real human labeling.</p>
+
+      <!-- Mode Selection -->
+      <div class="mode-selection" style="margin-bottom: 24px;">
+        <div class="mode-buttons">
+          <button class="mode-btn active" data-mode="simulated" onclick="setMode('simulated')">
+            🤖 Simulated Users
+          </button>
+          <button class="mode-btn" data-mode="manual" onclick="setMode('manual')">
+            👤 Human Labeling
+          </button>
+        </div>
+      </div>
+
+      <!-- Simulated Mode Form -->
+      <form method="post" action="{% url 'project2:run_experiment' %}" id="simulated-form">
+        {% csrf_token %}
+        <input type="hidden" name="mode" value="simulated">
+        
+        <div class="form-section">
+          <h3>Simulated Active Learning Configuration</h3>
+          <!-- URL to live visualization page -->
+          <input type="hidden" id="live-url" value="{% url 'project2:show_experiment_live' %}">
+          <div class="row" style="margin-bottom:16px">
+            <div class="form-group">
+              <label for="strategy">Strategy:</label>
+              <select id="strategy" name="strategy">
+                <option value="uncertainty">Uncertainty Sampling</option>
+                <option value="margin">Margin Sampling</option>
+                <option value="entropy">Entropy Sampling</option>
+                <option value="committee">Query-by-Committee</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="budget">Budget (labels to acquire):</label>
+              <input type="number" id="budget" name="budget" value="50" min="1" max="5000"/>
+            </div>
+            <div class="form-group">
+              <label for="target_accuracy">Target Accuracy (%):</label>
+              <input type="number" id="target_accuracy" name="target_accuracy" min="50" max="100" step="0.1" placeholder="Optional"/>
+            </div>
+          </div>
+          
+          <!-- Plateau Detection Configuration -->
+          <div class="row" style="margin-bottom:16px">
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="enable_plateau_detection" name="enable_plateau_detection" value="on" checked style="margin-right: 8px;">
+                Enable Plateau Detection
+              </label>
+              <small style="color: var(--muted); font-size: 12px; display: block; margin-top: 4px;">Stop training when improvement plateaus</small>
+            </div>
+          </div>
+          <div class="row" style="margin-bottom:16px" id="plateau-settings">
+            <div class="form-group">
+              <label for="plateau_patience">Plateau Patience:</label>
+              <input type="number" id="plateau_patience" name="plateau_patience" value="5" min="1" max="20" title="Number of iterations without improvement before stopping due to plateau"/>
+              <small style="color: var(--muted); font-size: 12px;">Iterations without improvement</small>
+            </div>
+            <div class="form-group">
+              <label for="plateau_threshold">Plateau Threshold (%):</label>
+              <input type="number" id="plateau_threshold" name="plateau_threshold" value="0.5" min="0.1" max="5.0" step="0.1" title="Minimum improvement percentage required to avoid plateau detection"/>
+              <small style="color: var(--muted); font-size: 12px;">Minimum improvement required</small>
+            </div>
+          </div>
+          <button type="submit" class="btn primary" id="simulated-submit-btn">▶ Run Simulated Experiment</button>
+        </div>
+      </form>
+
+      <!-- Manual Mode Form -->
+      <form method="post" action="{% url 'project2:start_human_labeling' %}" id="manual-form" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="mode" value="manual">
+        
+        <div class="form-section">
+          <h3>Human Labeling Configuration</h3>
+          <div class="row" style="margin-bottom:16px">
+            <div class="form-group">
+              <label for="manual_strategy">Strategy:</label>
+              <select id="manual_strategy" name="strategy">
+                <option value="uncertainty">Uncertainty Sampling</option>
+                <option value="margin">Margin Sampling</option>
+                <option value="entropy">Entropy Sampling</option>
+                <option value="committee">Query-by-Committee</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="max_samples">Maximum Samples:</label>
+              <input type="number" id="max_samples" name="max_samples" value="50" min="5" max="500"/>
+            </div>
+            <div class="form-group">
+              <label for="manual_target_accuracy">Target Accuracy (%):</label>
+              <input type="number" id="manual_target_accuracy" name="target_accuracy" min="50" max="100" step="0.1" placeholder="Optional"/>
+            </div>
+            <div class="form-group">
+              <label for="batch_size">Batch Size:</label>
+              <input type="number" id="batch_size" name="batch_size" value="1" min="1" max="10"/>
+            </div>
+          </div>
+          
+          <!-- Plateau Detection Configuration -->
+          <div class="row" style="margin-bottom:16px">
+            <div class="form-group">
+              <label for="manual_plateau_patience">Plateau Patience:</label>
+              <input type="number" id="manual_plateau_patience" name="plateau_patience" value="5" min="1" max="20" title="Number of iterations without improvement before stopping due to plateau"/>
+              <small style="color: var(--muted); font-size: 12px;">Iterations without improvement</small>
+            </div>
+            <div class="form-group">
+              <label for="manual_plateau_threshold">Plateau Threshold (%):</label>
+              <input type="number" id="manual_plateau_threshold" name="plateau_threshold" value="0.5" min="0.1" max="5.0" step="0.1" title="Minimum improvement percentage required to avoid plateau detection"/>
+              <small style="color: var(--muted); font-size: 12px;">Minimum improvement required</small>
+            </div>
+          </div>
+          <button type="submit" class="btn primary" id="manual-submit-btn">🚀 Start Human Labeling</button>
+        </div>
+      </form>
+
+      <!-- Progress Bar -->
+      <div id="progress-container" style="display: none; margin: 20px 0;">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-text" id="progress-text">Initializing...</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="muted-box">
+          <strong>Simulated Users:</strong> Use ground truth labels as oracle responses for fast, repeatable experiments.
+        </div>
+        <div class="muted-box">
+          <strong>Human Labeling:</strong> Real human-in-the-loop evaluation with actual user interaction and labeling.
+        </div>
+        <div class="muted-box">
+          <strong>Learning Curves:</strong> Visualize model performance improvement as more samples are labeled.
+        </div>
+        <div class="muted-box">
+          <strong>Termination Conditions:</strong> Stop when target accuracy is reached, plateau detected, or maximum budget is consumed.
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:18px">
+        <a href="{% url 'project2:index' %}" class="btn">Back to Home</a>
+        <a href="{% url 'project2:active_learning' %}" class="btn">← Back to Active Learning</a>
+      </div>
+    </div>
+
+    <footer>
+      Experiment & Evaluation - IMDB Sentiment Classification
+    </footer>
+  </div>
+
+     <script>
+     // Mode switching functionality
+     function setMode(mode) {
+       // Update button states
+       document.querySelectorAll('.mode-btn').forEach(btn => {
+         btn.classList.remove('active');
+       });
+       document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+       
+       // Show/hide forms
+       if (mode === 'simulated') {
+         document.getElementById('simulated-form').style.display = 'block';
+         document.getElementById('manual-form').style.display = 'none';
+       } else {
+         document.getElementById('simulated-form').style.display = 'none';
+         document.getElementById('manual-form').style.display = 'block';
+       }
+     }
+
+     // Progress tracking for Task 3 (simulated mode)
+     let progressInterval;
+     
+     document.getElementById('simulated-form').addEventListener('submit', function(e) {
+       e.preventDefault();
+       
+       const submitBtn = document.getElementById('simulated-submit-btn');
+       const progressContainer = document.getElementById('progress-container');
+       const progressFill = document.getElementById('progress-fill');
+       const progressText = document.getElementById('progress-text');
+       
+       // Disable submit button and show progress
+       submitBtn.disabled = true;
+       submitBtn.textContent = 'Running...';
+       progressContainer.style.display = 'block';
+       
+       // Submit form data and start progress tracking
+       const formData = new FormData(this);
+       
+       fetch('{% url "project2:run_experiment" %}', {
+         method: 'POST',
+         body: formData,
+         headers: {
+           'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+         }
+       })
+       .then(response => response.json())
+       .then(data => {
+         if (data.status === 'started') {
+           // Redirect to live visualization
+           const strategy = formData.get('strategy');
+           const liveUrl = document.getElementById('live-url').value;
+           window.location.href = liveUrl + '?strategy=' + strategy;
+         }
+       })
+       .catch(error => {
+         console.error('Error starting experiment:', error);
+         submitBtn.disabled = false;
+         submitBtn.textContent = '▶ Run Simulated Experiment';
+         progressContainer.style.display = 'none';
+       });
+     });
+     
+     // Toggle plateau detection settings
+     document.getElementById('enable_plateau_detection').addEventListener('change', function() {
+       const plateauSettings = document.getElementById('plateau-settings');
+       plateauSettings.style.display = this.checked ? 'flex' : 'none';
+     });
+   </script>
+</body>
+</html>

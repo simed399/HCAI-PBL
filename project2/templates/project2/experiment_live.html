@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Live Experiment - Project 2</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #171a2b;
+      --muted: #a9b0c3;
+      --text: #e9ecf2;
+      --accent: #6aa2ff;
+      --accent-2: #6effc6;
+      --border: #23263a;
+      --danger: #ff7676;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 80% -10%, #1a1f35 0%, var(--bg) 60%), var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.4;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 32px auto 72px;
+      padding: 0 20px;
+    }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+
+    h1 { font-size: 28px; margin: 0; letter-spacing: 0.3px; }
+    .subtle { color: var(--muted); font-size: 14px; }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    h2 { margin: 0 0 12px; font-size: 22px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 8px; color: var(--muted);
+      text-decoration: none; margin-bottom: 14px; font-size: 14px;
+    }
+    .back:hover { color: var(--text); }
+
+    .btn {
+      appearance: none; border: 1px solid var(--border); background: var(--card); color: var(--text);
+      padding: 10px 14px; border-radius: 12px; font-weight: 600; letter-spacing: 0.2px;
+      cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+      text-decoration: none; display: inline-block;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: #2b3150; box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
+    .btn.primary { background: linear-gradient(180deg, #1e264b, #1a2141); border-color: #2b3150; }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 4px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .chart-container {
+      height: 400px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat {
+      display: flex; flex-direction: column; gap: 4px; padding: 16px; 
+      border: 1px dashed #2b3150; border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+      text-align: center;
+    }
+    .stat .big { font-size: 24px; font-weight: 800; color: var(--accent-2); }
+    .stat .label { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+
+    .status-indicator {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+    }
+
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--muted);
+    }
+    
+    .status-dot.running { 
+      background: var(--accent); 
+      animation: pulse 1.5s infinite;
+    }
+    
+    .status-dot.complete { background: var(--accent-2); }
+    .status-dot.error { background: var(--danger); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    footer { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Live Experiment</h1>
+        <div class="subtle">Real-time Active Learning Visualization · <span class="status-indicator"><span class="status-dot" id="status-dot"></span><span id="status-text">Initializing...</span></span></div>
+      </div>
+      <a href="{% url 'project2:index' %}" class="btn">🏠 Home</a>
+    </header>
+
+    <a class="back" href="{% url 'project2:experiment' %}">← Back to Experiment Setup</a>
+    
+    <div class="panel">
+      <h2>Experiment Progress</h2>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="progress-text" id="progress-text">Initializing experiment...</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="big" id="current-accuracy">0.0%</div>
+        <div class="label">Current Accuracy</div>
+      </div>
+      <div class="stat">
+        <div class="big" id="samples-used">0</div>
+        <div class="label">Samples Used</div>
+      </div>
+      <div class="stat">
+        <div class="big" id="iteration-count">0</div>
+        <div class="label">Iterations</div>
+      </div>
+      <div class="stat">
+        <div class="big" id="strategy-name">-</div>
+        <div class="label">Strategy</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Learning Curve</h2>
+      <p class="subtle" style="margin:8px 0 18px">Real-time accuracy vs. number of labeled samples</p>
+      <div class="chart-container">
+        <canvas id="learningChart"></canvas>
+      </div>
+    </div>
+
+    <div class="panel" id="completion-panel" style="display: none;">
+      <h2>Experiment Complete!</h2>
+      <p class="subtle" style="margin:8px 0 18px">View detailed results and analysis.</p>
+      <a href="#" class="btn primary" id="view-results-btn">📊 View Detailed Results</a>
+      <a href="{% url 'project2:experiment' %}" class="btn">Run Another Experiment</a>
+    </div>
+
+    <footer>
+      Live Experiment Visualization - IMDB Sentiment Classification
+    </footer>
+  </div>
+
+  <script>
+    // Chart.js configuration for dark theme
+    const ctx = document.getElementById('learningChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        datasets: [{
+          label: 'Test Accuracy',
+          data: [],
+          borderColor: '#6aa2ff',
+          backgroundColor: 'rgba(106, 162, 255, 0.1)',
+          borderWidth: 3,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          pointBackgroundColor: '#6effc6',
+          pointBorderColor: '#6aa2ff',
+          pointBorderWidth: 2,
+          fill: false,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: '#e9ecf2',
+              font: { size: 14 }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            title: {
+              display: true,
+              text: 'Number of Labeled Samples',
+              color: '#a9b0c3',
+              font: { size: 14, weight: 'bold' }
+            },
+            ticks: {
+              color: '#a9b0c3',
+              font: { size: 12 }
+            },
+            grid: {
+              color: '#23263a',
+              lineWidth: 1
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Test Accuracy (%)',
+              color: '#a9b0c3',
+              font: { size: 14, weight: 'bold' }
+            },
+            ticks: {
+              color: '#a9b0c3',
+              font: { size: 12 },
+              callback: function(value) { return value + '%'; }
+            },
+            grid: {
+              color: '#23263a',
+              lineWidth: 1
+            },
+            min: 50,
+            max: 100
+          }
+        },
+        animation: {
+          duration: 750,
+          easing: 'easeInOutQuart'
+        }
+      }
+    });
+
+    // Real-time data fetching
+    let fetchInterval;
+    let currentStrategy = '';
+    
+    function updateChart(newData) {
+      if (newData && newData.length > 0) {
+        chart.data.datasets[0].data = newData;
+        chart.update('none'); // No animation for real-time updates
+        
+        // Update stats
+        const latestPoint = newData[newData.length - 1];
+        if (latestPoint) {
+          document.getElementById('current-accuracy').textContent = latestPoint.y.toFixed(1) + '%';
+          document.getElementById('samples-used').textContent = latestPoint.x;
+          document.getElementById('iteration-count').textContent = latestPoint.iteration || newData.length;
+        }
+      }
+    }
+
+    function updateStatus(status, message) {
+      const statusDot = document.getElementById('status-dot');
+      const statusText = document.getElementById('status-text');
+      
+      statusDot.className = 'status-dot ' + status;
+      statusText.textContent = message || 'Unknown status';
+      
+      if (status === 'complete') {
+        clearInterval(fetchInterval);
+        document.getElementById('completion-panel').style.display = 'block';
+        const viewResultsBtn = document.getElementById('view-results-btn');
+        viewResultsBtn.href = '{% url "project2:get_exp_results" %}';
+      }
+    }
+
+    function fetchExperimentData() {
+      fetch('{% url "project2:get_experiment_data" %}')
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'running' || data.status === 'complete') {
+            updateChart(data.data);
+            
+            // Update progress bar
+            document.getElementById('progress-fill').style.width = data.progress + '%';
+            document.getElementById('progress-text').textContent = data.message;
+            
+            updateStatus(data.status, data.status === 'running' ? 'Running...' : 'Complete!');
+          } else if (data.status === 'error') {
+            updateStatus('error', 'Error occurred');
+            clearInterval(fetchInterval);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching experiment data:', error);
+        });
+    }
+
+    // Start fetching data immediately
+    fetchExperimentData();
+    fetchInterval = setInterval(fetchExperimentData, 1000); // Update every second
+
+    // Handle page visibility for performance
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        clearInterval(fetchInterval);
+      } else {
+        fetchInterval = setInterval(fetchExperimentData, 1000);
+      }
+    });
+
+    // Get strategy from URL parameters if available
+    const urlParams = new URLSearchParams(window.location.search);
+    const strategy = urlParams.get('strategy');
+    if (strategy) {
+      document.getElementById('strategy-name').textContent = strategy.charAt(0).toUpperCase() + strategy.slice(1);
+    }
+  </script>
+</body>
+</html>

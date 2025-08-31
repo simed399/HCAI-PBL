@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Human Labeling Session - Project 2</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #171a2b;
+      --muted: #a9b0c3;
+      --text: #e9ecf2;
+      --accent: #6aa2ff;
+      --accent-2: #6effc6;
+      --border: #23263a;
+      --danger: #ff7676;
+      --success: #00d084;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 80% -10%, #1a1f35 0%, var(--bg) 60%), var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.4;
+    }
+
+    .wrap {
+      max-width: 1000px;
+      margin: 32px auto 72px;
+      padding: 0 20px;
+    }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+
+    h1 { font-size: 28px; margin: 0; letter-spacing: 0.3px; }
+    .subtle { color: var(--muted); font-size: 14px; }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    h2 { margin: 0 0 12px; font-size: 22px; }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .sample-container {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      min-height: 200px;
+    }
+
+    .sample-text {
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .label-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+
+    .label-btn {
+      appearance: none;
+      border: 2px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 120ms ease;
+      min-width: 150px;
+    }
+
+    .label-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+
+    .label-btn.positive {
+      border-color: var(--success);
+      background: linear-gradient(180deg, rgba(0, 208, 132, 0.1), rgba(0, 208, 132, 0.05));
+    }
+
+    .label-btn.positive:hover {
+      border-color: var(--success);
+      background: var(--success);
+      color: white;
+    }
+
+    .label-btn.negative {
+      border-color: var(--danger);
+      background: linear-gradient(180deg, rgba(255, 118, 118, 0.1), rgba(255, 118, 118, 0.05));
+    }
+
+    .label-btn.negative:hover {
+      border-color: var(--danger);
+      background: var(--danger);
+      color: white;
+    }
+
+    .confidence-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .confidence-scale {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .confidence-btn {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 120ms ease;
+      font-size: 14px;
+    }
+
+    .confidence-btn:hover, .confidence-btn.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .stat .big { font-size: 24px; font-weight: 800; color: var(--accent-2); }
+    .stat .unit { color: var(--muted); font-weight: 600; font-size: 12px; }
+
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #1d233b; border: 1px solid #2b3150; font-size: 12px; color: var(--muted); }
+
+    footer { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
+
+    .loading {
+      display: none;
+      text-align: center;
+      color: var(--muted);
+      margin: 20px 0;
+    }
+
+    @media (max-width: 760px) {
+      .label-buttons { flex-direction: column; align-items: center; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Human Labeling Session</h1>
+        <div class="subtle">Session: {{ session.session_id }} · {{ session.strategy|title }} Sampling · <span class="pill">Active</span></div>
+      </div>
+    </header>
+
+    <!-- Progress Section -->
+    <div class="panel">
+      <h2>Session Progress</h2>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: {{ progress_percentage }}%"></div>
+      </div>
+      <div class="progress-text">
+        {{ labeled_count }} of {{ total_count }} samples labeled ({{ progress_percentage|floatformat:1 }}%)
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="big">{{ labeled_count }}</span>
+          <span class="unit">Labeled</span>
+        </div>
+        <div class="stat">
+          <span class="big">{{ total_count }}</span>
+          <span class="unit">Total</span>
+        </div>
+        <div class="stat">
+          <span class="big">{{ session.current_accuracy|floatformat:1 }}%</span>
+          <span class="unit">Current Accuracy</span>
+        </div>
+        <div class="stat">
+          <span class="big">{{ session.strategy|title }}</span>
+          <span class="unit">Strategy</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sample Labeling Section -->
+    <div class="panel">
+      <h2>Label This Sample</h2>
+      <p class="subtle" style="margin: 8px 0 18px">Read the movie review below and classify it as positive or negative sentiment.</p>
+
+      <div class="sample-container">
+        <div class="sample-text">
+          {{ sample.sample_original_text|default:sample.sample_text }}
+        </div>
+
+        <div class="label-buttons">
+          <button class="label-btn negative" onclick="setLabel(0)">
+            👎 Negative
+          </button>
+          <button class="label-btn positive" onclick="setLabel(1)">
+            👍 Positive
+          </button>
+        </div>
+
+        <div class="confidence-section" id="confidence-section" style="display: none;">
+          <h3 style="text-align: center; margin: 0 0 12px;">How confident are you?</h3>
+          <div class="confidence-scale">
+            <button class="confidence-btn" data-confidence="1">Very Unsure</button>
+            <button class="confidence-btn" data-confidence="2">Unsure</button>
+            <button class="confidence-btn" data-confidence="3">Neutral</button>
+            <button class="confidence-btn" data-confidence="4">Sure</button>
+            <button class="confidence-btn" data-confidence="5">Very Sure</button>
+          </div>
+          
+          <div style="text-align: center; margin-top: 20px;">
+            <button class="label-btn" onclick="submitLabel()" id="submit-btn" disabled style="background: var(--accent); border-color: var(--accent);">
+              Submit Label
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="loading" id="loading">
+        <p>Processing your label and retraining the model...</p>
+      </div>
+    </div>
+
+    <footer>
+      Human Labeling Session - IMDB Sentiment Classification
+    </footer>
+  </div>
+
+  <script>
+    let selectedLabel = null;
+    let selectedConfidence = null;
+    let startTime = Date.now();
+
+    function setLabel(label) {
+      selectedLabel = label;
+      
+      // Update button states
+      document.querySelectorAll('.label-btn').forEach(btn => {
+        btn.style.opacity = '0.5';
+      });
+      
+      if (label === 0) {
+        document.querySelector('.label-btn.negative').style.opacity = '1';
+        document.querySelector('.label-btn.negative').style.background = 'var(--danger)';
+        document.querySelector('.label-btn.negative').style.color = 'white';
+      } else {
+        document.querySelector('.label-btn.positive').style.opacity = '1';
+        document.querySelector('.label-btn.positive').style.background = 'var(--success)';
+        document.querySelector('.label-btn.positive').style.color = 'white';
+      }
+      
+      // Show confidence section
+      document.getElementById('confidence-section').style.display = 'block';
+    }
+
+    function setConfidence(confidence) {
+      selectedConfidence = confidence;
+      
+      // Update confidence button states
+      document.querySelectorAll('.confidence-btn').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+      
+      document.querySelector(`[data-confidence="${confidence}"]`).classList.add('selected');
+      
+      // Enable submit button
+      document.getElementById('submit-btn').disabled = false;
+    }
+
+    // Add event listeners to confidence buttons
+    document.querySelectorAll('.confidence-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setConfidence(parseInt(btn.dataset.confidence));
+      });
+    });
+
+    async function submitLabel() {
+      if (selectedLabel === null || selectedConfidence === null) {
+        alert('Please select both a label and confidence level.');
+        return;
+      }
+
+      const labelingTime = (Date.now() - startTime) / 1000; // Convert to seconds
+      
+      // Show loading
+      document.querySelector('.sample-container').style.display = 'none';
+      document.getElementById('loading').style.display = 'block';
+
+      try {
+        const response = await fetch(`/project2/human-labeling/label/{{ session.session_id }}/{{ sample.id }}/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          },
+          body: JSON.stringify({
+            label: selectedLabel,
+            confidence: selectedConfidence,
+            labeling_time: labelingTime
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Redirect to next sample or results
+          window.location.href = data.next_url;
+        } else {
+          alert('Error submitting label. Please try again.');
+          document.querySelector('.sample-container').style.display = 'block';
+          document.getElementById('loading').style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error submitting label. Please try again.');
+        document.querySelector('.sample-container').style.display = 'block';
+        document.getElementById('loading').style.display = 'none';
+      }
+    }
+
+    // Add CSRF token for AJAX requests
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfToken) {
+      const metaTag = document.createElement('meta');
+      metaTag.name = 'csrf-token';
+      metaTag.content = '{{ csrf_token }}';
+      document.head.appendChild(metaTag);
+    }
+  </script>
+  
+  <!-- Hidden CSRF token -->
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+</body>
+</html>

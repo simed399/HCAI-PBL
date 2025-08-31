@@ -1,17 +1,177 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Active Learning Result</h1>
-  <p>
-    Strategy: <strong>{{ strategy|title }}</strong><br/>
-    Queried:  <strong>{{ n_queries }}</strong> samples<br/>
-    Test accuracy after retraining: 
-    <strong>{{ accuracy|floatformat:2 }}</strong>
-  </p>
-  <h2>Selected Reviews</h2>
-  <ul>
-    {% for review in selected %}
-      <li>{{ review|truncatechars:200 }}</li>
-    {% endfor %}
-  </ul>
-  <p><a href="{% url 'project2:active_learning' %}">Run again</a></p>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Active Learning Results - Project 2</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #171a2b;
+      --muted: #a9b0c3;
+      --text: #e9ecf2;
+      --accent: #6aa2ff;
+      --accent-2: #6effc6;
+      --border: #23263a;
+      --danger: #ff7676;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 80% -10%, #1a1f35 0%, var(--bg) 60%), var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.4;
+    }
+
+    .wrap {
+      max-width: 1000px;
+      margin: 32px auto 72px;
+      padding: 0 20px;
+    }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+
+    h1 { font-size: 28px; margin: 0; letter-spacing: 0.3px; }
+    .subtle { color: var(--muted); font-size: 14px; }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    h2 { margin: 0 0 12px; font-size: 22px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 8px; color: var(--muted);
+      text-decoration: none; margin-bottom: 14px; font-size: 14px;
+    }
+    .back:hover { color: var(--text); }
+
+    .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+
+    .btn {
+      appearance: none; border: 1px solid var(--border); background: var(--card); color: var(--text);
+      padding: 10px 14px; border-radius: 12px; font-weight: 600; letter-spacing: 0.2px;
+      cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+      text-decoration: none; display: inline-block;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: #2b3150; box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
+    .btn.primary { background: linear-gradient(180deg, #1e264b, #1a2141); border-color: #2b3150; }
+
+    .stat {
+      display: inline-flex; align-items: baseline; gap: 8px; padding: 10px 12px; border: 1px dashed #2b3150; border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .stat .big { font-size: 26px; font-weight: 800; color: var(--accent-2); }
+    .stat .unit { color: var(--muted); font-weight: 600; }
+
+    .muted-box { color: var(--muted); border: 1px dashed var(--border); border-radius: 12px; padding: 12px; }
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #1d233b; border: 1px solid #2b3150; font-size: 12px; color: var(--muted); }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+    .review-list {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .review-item {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .review-item:last-child {
+      border-bottom: none;
+    }
+
+    footer { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
+
+    @media (max-width: 760px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Active Learning Results</h1>
+        <div class="subtle">IMDB 50k · {{ strategy|title }} Sampling · <span class="pill">Complete</span></div>
+      </div>
+      <a href="{% url 'project2:index' %}" class="btn">🏠 Home</a>
+    </header>
+
+    <a class="back" href="{% url 'project2:index' %}">← Back to Home</a>
+    <div class="panel">
+      <h2>Results Summary</h2>
+      <p class="subtle" style="margin:8px 0 18px">Active learning iteration completed successfully.</p>
+
+      <div class="row" style="margin-bottom:16px">
+        <div class="stat">
+          <span class="big">{{ accuracy|floatformat:2 }}%</span>
+          <span class="unit">test accuracy</span>
+        </div>
+        <div class="stat">
+          <span class="big">{{ n_queries }}</span>
+          <span class="unit">queried samples</span>
+        </div>
+        {% if total_samples %}
+        <div class="stat">
+          <span class="big">{{ total_samples }}</span>
+          <span class="unit">total trained samples</span>
+        </div>
+        {% endif %}
+        <span class="pill">{{ strategy|title }} Sampling</span>
+      </div>
+
+      <div class="grid-2">
+        <div class="muted-box">
+          <strong>Strategy:</strong> {{ strategy|title }} Sampling<br/>
+          <strong>Queried Samples:</strong> {{ n_queries }}<br/>
+          {% if total_samples %}<strong>Total Training Samples:</strong> {{ total_samples }}<br/>{% endif %}
+          <strong>Test Accuracy:</strong> {{ accuracy|floatformat:2 }}%
+        </div>
+        <div class="muted-box">
+          <strong>Process:</strong> Iterative active learning with {{ n_queries }} selection rounds, retraining after each sample.<br/>
+          <strong>Approach:</strong> Bootstrap with minimal data, then iteratively select most informative samples for progressive improvement.
+        </div>
+      </div>
+
+      <div style="margin-top:18px">
+        <h3>Selected Reviews ({{ selected|length }} samples)</h3>
+        <div class="review-list">
+          {% for review in selected %}
+            <div class="review-item">
+              {{ review|truncatechars:200 }}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:18px">
+        <a href="{% url 'project2:active_learning' %}" class="btn primary">Run Another Iteration</a>
+        <a href="{% url 'project2:experiment' %}" class="btn">Continue to Experiments →</a>
+        <a href="{% url 'project2:index' %}" class="btn">Back to Home</a>
+      </div>
+    </div>
+
+    <footer>
+      Active Learning Results - IMDB Sentiment Classification
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Human Labeling Results - Project 2</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #171a2b;
+      --muted: #a9b0c3;
+      --text: #e9ecf2;
+      --accent: #6aa2ff;
+      --accent-2: #6effc6;
+      --border: #23263a;
+      --danger: #ff7676;
+      --success: #00d084;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 80% -10%, #1a1f35 0%, var(--bg) 60%), var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.4;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 32px auto 72px;
+      padding: 0 20px;
+    }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+
+    h1 { font-size: 28px; margin: 0; letter-spacing: 0.3px; }
+    .subtle { color: var(--muted); font-size: 14px; }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    h2 { margin: 0 0 12px; font-size: 22px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 8px; color: var(--muted);
+      text-decoration: none; margin-bottom: 14px; font-size: 14px;
+    }
+    .back:hover { color: var(--text); }
+
+    .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+
+    .btn {
+      appearance: none; border: 1px solid var(--border); background: var(--card); color: var(--text);
+      padding: 10px 14px; border-radius: 12px; font-weight: 600; letter-spacing: 0.2px;
+      cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+      text-decoration: none; display: inline-block;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: #2b3150; box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
+    .btn.primary { background: linear-gradient(180deg, #1e264b, #1a2141); border-color: #2b3150; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .stat .big { font-size: 32px; font-weight: 800; color: var(--accent-2); margin-bottom: 4px; }
+    .stat .unit { color: var(--muted); font-weight: 600; font-size: 14px; }
+
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #1d233b; border: 1px solid #2b3150; font-size: 12px; color: var(--muted); }
+
+    .chart-container {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      height: 400px;
+    }
+
+    .sample-list {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .sample-item {
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .sample-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .label-badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .label-positive { background: var(--success); color: white; }
+    .label-negative { background: var(--danger); color: white; }
+    .label-correct { border: 2px solid var(--success); }
+    .label-incorrect { border: 2px solid var(--danger); }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+
+    footer { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
+
+    @media (max-width: 760px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Human Labeling Results</h1>
+        <div class="subtle">Session: {{ session.session_id }} · {{ session.strategy|title }} Sampling · <span class="pill">Completed</span></div>
+      </div>
+      <a href="{% url 'project2:index' %}" class="btn">🏠 Home</a>
+    </header>
+
+    <a class="back" href="{% url 'project2:index' %}">← Back to Home</a>
+
+    <!-- Summary Statistics -->
+    <div class="panel">
+      <h2>Session Summary</h2>
+      <p class="subtle" style="margin:8px 0 18px">Results from your human labeling session.</p>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="big">{{ total_labeled }}</span>
+          <span class="unit">Samples Labeled</span>
+        </div>
+        <div class="stat">
+          <span class="big">{{ final_accuracy|floatformat:1 }}%</span>
+          <span class="unit">Final Accuracy</span>
+        </div>
+        <div class="stat">
+          <span class="big">{{ accuracy_improvement|floatformat:1 }}%</span>
+          <span class="unit">Improvement</span>
+        </div>
+        <div class="stat">
+          <span class="big">{{ human_accuracy|floatformat:1 }}%</span>
+          <span class="unit">Human Accuracy</span>
+        </div>
+        {% if avg_labeling_time %}
+        <div class="stat">
+          <span class="big">{{ avg_labeling_time|floatformat:1 }}s</span>
+          <span class="unit">Avg Time/Label</span>
+        </div>
+        {% endif %}
+        <div class="stat">
+          <span class="big">{{ session.strategy|title }}</span>
+          <span class="unit">Strategy Used</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Learning Curve -->
+    <div class="panel">
+      <h2>Learning Curve</h2>
+      <p class="subtle" style="margin:8px 0 18px">Model accuracy improvement as you labeled more samples.</p>
+      
+      <div class="chart-container">
+        <canvas id="learningCurve"></canvas>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Session Details -->
+      <div class="panel">
+        <h2>Session Details</h2>
+        <div style="color: var(--muted); line-height: 1.6;">
+          <p><strong>Strategy:</strong> {{ session.strategy|title }} Sampling</p>
+          <p><strong>Started:</strong> {{ session.created_at|date:"M d, Y H:i" }}</p>
+          <p><strong>Completed:</strong> {{ session.completed_at|date:"M d, Y H:i" }}</p>
+          <p><strong>Duration:</strong> 
+            {% if session.completed_at and session.created_at %}
+              {% widthratio session.completed_at|timeuntil:session.created_at 1 60 %} minutes
+            {% else %}
+              -
+            {% endif %}
+          </p>
+          <p><strong>Initial Accuracy:</strong> {{ session.initial_accuracy|floatformat:1 }}%</p>
+          <p><strong>Final Accuracy:</strong> {{ session.current_accuracy|floatformat:1 }}%</p>
+          <p><strong>Samples Target:</strong> {{ session.max_samples }}</p>
+          <p><strong>Samples Labeled:</strong> {{ total_labeled }}</p>
+        </div>
+      </div>
+
+      <!-- Labeled Samples -->
+      <div class="panel">
+        <h2>Labeled Samples</h2>
+        <p class="subtle" style="margin:8px 0 18px">First {{ labeled_samples|length }} samples you labeled (showing truncated text).</p>
+        
+        <div class="sample-list">
+          {% for sample in labeled_samples %}
+            <div class="sample-item {% if sample.is_correct %}label-correct{% else %}label-incorrect{% endif %}">
+              <div class="sample-meta">
+                <span>Sample #{{ sample.selection_order }}</span>
+                <div>
+                  <span class="label-badge label-{{ sample.get_human_label_display|lower }}">
+                    {{ sample.get_human_label_display }}
+                  </span>
+                  {% if sample.is_correct %}
+                    <span style="color: var(--success); margin-left: 8px;">✓</span>
+                  {% else %}
+                    <span style="color: var(--danger); margin-left: 8px;">✗</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div>{{ sample.sample_original_text|default:sample.sample_text|truncatechars:150 }}</div>
+              {% if sample.labeling_time_seconds %}
+                <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
+                  Labeled in {{ sample.labeling_time_seconds|floatformat:1 }}s
+                  {% if sample.confidence %}
+                    · Confidence: {{ sample.get_confidence_display }}
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          {% empty %}
+            <p style="color: var(--muted); text-align: center;">No samples to display.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="panel">
+      <div class="row">
+        <a href="{% url 'project2:human_labeling_setup' %}" class="btn primary">Start New Session</a>
+        <a href="{% url 'project2:active_learning' %}" class="btn">Try Simulated Active Learning</a>
+        <a href="{% url 'project2:experiment' %}" class="btn">Run Experiments</a>
+        <a href="{% url 'project2:index' %}" class="btn">Back to Home</a>
+      </div>
+    </div>
+
+    <footer>
+      Human Labeling Results - IMDB Sentiment Classification
+    </footer>
+  </div>
+
+  <script>
+    // Learning Curve Chart
+    const ctx = document.getElementById('learningCurve').getContext('2d');
+    const learningData = {{ learning_curve_data|safe }};
+    
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        datasets: [{
+          label: 'Test Accuracy (%)',
+          data: learningData.map(point => ({ x: point[0], y: point[1] })),
+          borderColor: '#6aa2ff',
+          backgroundColor: 'rgba(106, 162, 255, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.2,
+          pointBackgroundColor: '#6effc6',
+          pointBorderColor: '#6aa2ff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: '#e9ecf2'
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            position: 'bottom',
+            title: {
+              display: true,
+              text: 'Samples Labeled',
+              color: '#a9b0c3'
+            },
+            ticks: {
+              color: '#a9b0c3'
+            },
+            grid: {
+              color: '#23263a'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Accuracy (%)',
+              color: '#a9b0c3'
+            },
+            ticks: {
+              color: '#a9b0c3'
+            },
+            grid: {
+              color: '#23263a'
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,10 +1,170 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Experiment Results</h1>
-  <p>
-    Strategy: <strong>{{ strategy|title }}</strong><br/>
-    Budget:   <strong>{{ budget }}</strong> labels
-  </p>
-  <img src="{{ image_url }}" alt="Accuracy vs. budget plot">
-  <p><a href="{% url 'project2:experiment' %}">Run another experiment</a></p>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Experiment Results - Project 2</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #171a2b;
+      --muted: #a9b0c3;
+      --text: #e9ecf2;
+      --accent: #6aa2ff;
+      --accent-2: #6effc6;
+      --border: #23263a;
+      --danger: #ff7676;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 80% -10%, #1a1f35 0%, var(--bg) 60%), var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.4;
+    }
+
+    .wrap {
+      max-width: 1000px;
+      margin: 32px auto 72px;
+      padding: 0 20px;
+    }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+
+    h1 { font-size: 28px; margin: 0; letter-spacing: 0.3px; }
+    .subtle { color: var(--muted); font-size: 14px; }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    h2 { margin: 0 0 12px; font-size: 22px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 8px; color: var(--muted);
+      text-decoration: none; margin-bottom: 14px; font-size: 14px;
+    }
+    .back:hover { color: var(--text); }
+
+    .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+
+    .btn {
+      appearance: none; border: 1px solid var(--border); background: var(--card); color: var(--text);
+      padding: 10px 14px; border-radius: 12px; font-weight: 600; letter-spacing: 0.2px;
+      cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+      text-decoration: none; display: inline-block;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: #2b3150; box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
+    .btn.primary { background: linear-gradient(180deg, #1e264b, #1a2141); border-color: #2b3150; }
+
+    .stat {
+      display: inline-flex; align-items: baseline; gap: 8px; padding: 10px 12px; border: 1px dashed #2b3150; border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .stat .big { font-size: 26px; font-weight: 800; color: var(--accent-2); }
+    .stat .unit { color: var(--muted); font-weight: 600; }
+
+    .muted-box { color: var(--muted); border: 1px dashed var(--border); border-radius: 12px; padding: 12px; }
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #1d233b; border: 1px solid #2b3150; font-size: 12px; color: var(--muted); }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+    .plot-container {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      background: rgba(255,255,255,0.02);
+      text-align: center;
+    }
+
+    .plot-container img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+
+    footer { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
+
+    @media (max-width: 760px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Experiment Results</h1>
+        <div class="subtle">IMDB 50k · {{ strategy|title }} Sampling · <span class="pill">Complete</span></div>
+      </div>
+      <a href="{% url 'project2:index' %}" class="btn">🏠 Home</a>
+    </header>
+
+    <a class="back" href="{% url 'project2:index' %}">← Back to Home</a>
+    <div class="panel">
+      <h2>Learning Curve Analysis</h2>
+      <p class="subtle" style="margin:8px 0 18px">Experiment completed with {{ strategy|title }} sampling strategy - {{ stop_reason_display }}</p>
+
+      <div class="row" style="margin-bottom:16px">
+        <div class="stat">
+          <span class="big">{{ final_accuracy|floatformat:1 }}%</span>
+          <span class="unit">final accuracy</span>
+        </div>
+        <div class="stat">
+          <span class="big">{{ samples_used }}</span>
+          <span class="unit">samples used</span>
+        </div>
+        <div class="stat">
+          <span class="big">{{ budget }}</span>
+          <span class="unit">max budget</span>
+        </div>
+        <span class="pill">{{ stop_reason_display }}</span>
+      </div>
+
+      <div class="grid-2">
+        <div class="muted-box">
+          <strong>Strategy:</strong> {{ strategy|title }} Sampling<br/>
+          <strong>Samples Used:</strong> {{ samples_used }} / {{ budget }}<br/>
+          <strong>Final Accuracy:</strong> {{ final_accuracy|floatformat:2 }}%<br/>
+          <strong>Stopping Reason:</strong> {{ stop_reason_display }}
+        </div>
+        <div class="muted-box">
+          <strong>Target Accuracy:</strong> {% if target_accuracy %}{{ target_accuracy }}%{% else %}Not specified{% endif %}<br/>
+          <strong>Plateau Detection:</strong> {{ plateau_patience }} iterations, {{ plateau_threshold }}% threshold<br/>
+          <strong>Efficiency:</strong> {% if stop_reason == 'target_accuracy_reached' %}🎯 Target reached early{% elif stop_reason == 'plateau_detected' %}📈 Performance plateau{% elif stop_reason == 'budget_reached' %}💰 Full budget used{% else %}⚠️ {{ stop_reason_display }}{% endif %}<br/>
+          <strong>Analysis:</strong> Compare with other strategies to find optimal approach
+        </div>
+      </div>
+
+      <div style="margin-top:18px">
+        <h3>Learning Curve with Stopping Conditions</h3>
+        <div class="plot-container">
+          <img src="{{ image_url }}" alt="Accuracy vs. budget plot for {{ strategy|title }} sampling showing stopping condition: {{ stop_reason_display }}">
+        </div>
+        <p class="subtle" style="text-align: center; margin-top: 12px;">
+          Experiment stopped after {{ samples_used }} samples due to: <strong>{{ stop_reason_display }}</strong>
+        </p>
+      </div>
+
+      <div class="row" style="margin-top:18px">
+        <a href="{% url 'project2:experiment' %}" class="btn primary">Run Another Experiment</a>
+        <a href="{% url 'project2:active_learning' %}" class="btn">← Back to Active Learning</a>
+        <a href="{% url 'project2:index' %}" class="btn">Back to Home</a>
+      </div>
+    </div>
+
+    <footer>
+      Experiment Results - IMDB Sentiment Classification
+    </footer>
+  </div>
+</body>
+</html>

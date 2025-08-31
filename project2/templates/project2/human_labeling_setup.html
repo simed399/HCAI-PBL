@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Human Labeling Setup - Project 2</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #171a2b;
+      --muted: #a9b0c3;
+      --text: #e9ecf2;
+      --accent: #6aa2ff;
+      --accent-2: #6effc6;
+      --border: #23263a;
+      --danger: #ff7676;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 80% -10%, #1a1f35 0%, var(--bg) 60%), var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.4;
+    }
+
+    .wrap {
+      max-width: 1000px;
+      margin: 32px auto 72px;
+      padding: 0 20px;
+    }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+
+    h1 { font-size: 28px; margin: 0; letter-spacing: 0.3px; }
+    .subtle { color: var(--muted); font-size: 14px; }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    h2 { margin: 0 0 12px; font-size: 22px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 8px; color: var(--muted);
+      text-decoration: none; margin-bottom: 14px; font-size: 14px;
+    }
+    .back:hover { color: var(--text); }
+
+    .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+
+    .btn {
+      appearance: none; border: 1px solid var(--border); background: var(--card); color: var(--text);
+      padding: 10px 14px; border-radius: 12px; font-weight: 600; letter-spacing: 0.2px;
+      cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+      text-decoration: none; display: inline-block;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: #2b3150; box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
+    .btn.primary { background: linear-gradient(180deg, #1e264b, #1a2141); border-color: #2b3150; }
+
+    select, input[type="number"] {
+      background: var(--card); border: 1px solid var(--border); color: var(--text);
+      padding: 10px 12px; border-radius: 10px; min-width: 220px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .form-group .help-text {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .muted-box { color: var(--muted); border: 1px dashed var(--border); border-radius: 12px; padding: 12px; }
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #1d233b; border: 1px solid #2b3150; font-size: 12px; color: var(--muted); }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+    footer { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
+
+    @media (max-width: 760px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Human Labeling Setup</h1>
+        <div class="subtle">IMDB 50k · Real User Interface · <span class="pill">Human-in-the-Loop</span></div>
+      </div>
+      <a href="{% url 'project2:index' %}" class="btn">🏠 Home</a>
+    </header>
+
+    <a class="back" href="{% url 'project2:index' %}">← Back to Home</a>
+    <div class="panel">
+      <h2>Configure Human Labeling Session</h2>
+      <p class="subtle" style="margin:8px 0 18px">Set up active learning with real human labeling. You'll manually label selected samples to train the model.</p>
+
+      <form method="post" action="{% url 'project2:start_human_labeling' %}" id="setup-form">
+        {% csrf_token %}
+        
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="strategy">Active Learning Strategy:</label>
+            <select id="strategy" name="strategy" required>
+              <option value="uncertainty">Uncertainty Sampling</option>
+              <option value="margin">Margin Sampling</option>
+              <option value="entropy">Entropy Sampling</option>
+            </select>
+            <div class="help-text">Strategy for selecting which samples to label</div>
+          </div>
+
+          <div class="form-group">
+            <label for="max_samples">Maximum Samples:</label>
+            <input type="number" id="max_samples" name="max_samples" value="50" min="5" max="500" required/>
+            <div class="help-text">Maximum number of samples to label</div>
+          </div>
+
+          <div class="form-group">
+            <label for="batch_size">Batch Size:</label>
+            <input type="number" id="batch_size" name="batch_size" value="1" min="1" max="10" required/>
+            <div class="help-text">Number of samples to select at once</div>
+          </div>
+
+          <div class="form-group">
+            <label for="target_accuracy">Target Accuracy (%):</label>
+            <input type="number" id="target_accuracy" name="target_accuracy" min="50" max="100" step="0.1" placeholder="Optional"/>
+            <div class="help-text">Stop when this accuracy is reached (optional)</div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:24px">
+          <button type="submit" class="btn primary">🚀 Start Human Labeling Session</button>
+          <a href="{% url 'project2:index' %}" class="btn">Cancel</a>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel" style="margin-top:22px">
+      <h2>How Human Labeling Works</h2>
+      <div class="grid-2">
+        <div class="muted-box">
+          <strong>Step 1:</strong> The system selects the most informative samples using your chosen strategy.
+        </div>
+        <div class="muted-box">
+          <strong>Step 2:</strong> You manually label each sample as positive or negative sentiment.
+        </div>
+        <div class="muted-box">
+          <strong>Step 3:</strong> The model retrains on your labels and improves its performance.
+        </div>
+        <div class="muted-box">
+          <strong>Step 4:</strong> The process repeats until stopping criteria are met.
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Human Labeling Interface - IMDB Sentiment Classification
+    </footer>
+  </div>
+</body>
+</html>

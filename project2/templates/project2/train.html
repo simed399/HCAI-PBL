@@ -1,5 +1,328 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Full‐data Training Complete</h1>
-  <p>Test accuracy on 25 000 IMDB reviews: <strong>{{ accuracy|floatformat:2 }}</strong></p>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Task 1: Supervised Baseline - Project 2</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #171a2b;
+      --muted: #a9b0c3;
+      --text: #e9ecf2;
+      --accent: #6aa2ff;
+      --accent-2: #6effc6;
+      --border: #23263a;
+      --danger: #ff7676;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 80% -10%, #1a1f35 0%, var(--bg) 60%), var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.4;
+    }
+
+    .wrap {
+      max-width: 1000px;
+      margin: 32px auto 72px;
+      padding: 0 20px;
+    }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+
+    h1 { font-size: 28px; margin: 0; letter-spacing: 0.3px; }
+    .subtle { color: var(--muted); font-size: 14px; }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    h2 { margin: 0 0 12px; font-size: 22px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 8px; color: var(--muted);
+      text-decoration: none; margin-bottom: 14px; font-size: 14px;
+    }
+    .back:hover { color: var(--text); }
+
+    .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+
+    .btn {
+      appearance: none; border: 1px solid var(--border); background: var(--card); color: var(--text);
+      padding: 10px 14px; border-radius: 12px; font-weight: 600; letter-spacing: 0.2px;
+      cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+      text-decoration: none; display: inline-block;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: #2b3150; box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
+    .btn.primary { background: linear-gradient(180deg, #1e264b, #1a2141); border-color: #2b3150; }
+
+    .stat {
+      display: inline-flex; align-items: baseline; gap: 8px; padding: 10px 12px; border: 1px dashed #2b3150; border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .stat .big { font-size: 26px; font-weight: 800; color: var(--accent-2); }
+    .stat .unit { color: var(--muted); font-weight: 600; }
+
+    .muted-box { color: var(--muted); border: 1px dashed var(--border); border-radius: 12px; padding: 12px; }
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #1d233b; border: 1px solid #2b3150; font-size: 12px; color: var(--muted); }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+    /* Progress Bar Styles */
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 4px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    footer { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
+
+    @media (max-width: 760px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Task 1 · Supervised Baseline</h1>
+        <div class="subtle">IMDB 50k · Training Set · <span class="pill">Complete</span></div>
+      </div>
+      <a href="{% url 'project2:index' %}" class="btn">🏠 Home</a>
+    </header>
+
+    <a class="back" href="{% url 'project2:index' %}">← Back to Home</a>
+    
+    <!-- Classifier Description Panel -->
+    <div class="panel" style="margin-bottom: 20px;">
+      <h2>Classifier Architecture</h2>
+      <p class="subtle" style="margin:8px 0 18px">Our baseline sentiment classifier uses a two-stage pipeline optimized for text classification.</p>
+      
+      <div class="grid-2">
+        <div class="muted-box">
+          <strong>Feature Extraction:</strong> TF-IDF Vectorizer<br/>
+          <strong>Vocabulary Size:</strong> 10,000 most frequent terms<br/>
+          <strong>Normalization:</strong> L2 normalization for document vectors<br/>
+          <strong>Preprocessing:</strong> Lowercasing, stopword removal, lemmatization
+        </div>
+        <div class="muted-box">
+          <strong>Classifier:</strong> Logistic Regression<br/>
+          <strong>Solver:</strong> LibLinear (optimized for small datasets)<br/>
+          <strong>Regularization:</strong> L2 penalty to prevent overfitting<br/>
+          <strong>Output:</strong> Binary classification (positive/negative sentiment)
+        </div>
+      </div>
+      
+      <div class="muted-box" style="margin-top: 16px;">
+        <strong>Pipeline Process:</strong> Raw text → Cleaning & tokenization → TF-IDF features → Logistic regression → Sentiment prediction (0: negative, 1: positive)
+      </div>
+    </div>
+    
+    <div class="panel">
+      <h2>Model Training & Evaluation</h2>
+      <p class="subtle" style="margin:8px 0 18px">Train a new baseline model or upload a pre-trained classifier.</p>
+      
+      <div class="row" style="margin-bottom:16px">
+        <div class="stat">
+          <span class="big" id="accuracy-display">{% if accuracy %}{{ accuracy|floatformat:2 }}%{% else %}—{% endif %}</span>
+          <span class="unit">test accuracy</span>
+        </div>
+        <div class="stat">
+          <span class="big">15,000</span>
+          <span class="unit">test reviews</span>
+        </div>
+        <span class="pill">Baseline Model</span>
+      </div>
+
+      <!-- Progress Bar -->
+      <div id="progress-container" style="display: none; margin: 20px 0;">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-text" id="progress-text">Initializing...</div>
+      </div>
+
+      <div class="grid-2" style="margin-top:18px">
+        <div class="muted-box">
+          <strong>Model:</strong> TF-IDF + Logistic Regression<br/>
+          <strong>Training Data:</strong> IMDB training split (train.csv)<br/>
+          <strong>Evaluation:</strong> Standard test split (test.csv)
+        </div>
+        <div class="muted-box">
+          <strong>Performance:</strong> This baseline establishes the upper bound for active learning performance.<br/>
+          <strong>Next:</strong> Compare with active learning strategies using fewer labels.
+        </div>
+      </div>
+
+      <!-- Model Options -->
+      <div class="row" style="margin-top:18px; gap: 24px;">
+        <!-- Train New Model -->
+        <div style="flex: 1;">
+          <h3 style="margin: 0 0 12px; font-size: 18px;">Train New Model</h3>
+          {% if not accuracy %}
+            <button class="btn primary" onclick="startTraining()" style="width: 100%;">▶ Start Training</button>
+          {% else %}
+            <button class="btn primary" onclick="startTraining()" style="width: 100%;">🔄 Retrain Model</button>
+          {% endif %}
+          <p style="color: var(--muted); font-size: 12px; margin: 8px 0 0;">Train on IMDB training split (~5-10 minutes)</p>
+        </div>
+        
+        <!-- Upload Pre-trained Model -->
+        <div style="flex: 1;">
+          <h3 style="margin: 0 0 12px; font-size: 18px;">Upload Pre-trained Model</h3>
+          <form id="upload-form" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 8px;">
+            {% csrf_token %}
+            <input type="file" id="model-file" name="model_file" accept=".pkl,.pickle" style="
+              background: var(--card); border: 1px dashed var(--border); color: var(--text);
+              padding: 10px 12px; border-radius: 10px; width: 100%;
+              cursor: pointer;
+            "/>
+            <button type="submit" class="btn" style="width: 100%;">📁 Upload & Evaluate</button>
+          </form>
+          <div style="color: var(--muted); font-size: 12px; margin: 8px 0 0; line-height: 1.4;">
+            <strong>Format Requirements:</strong><br/>
+            • File Format: .pkl or .pickle files only<br/>
+            • Content: A pickled scikit-learn pipeline object<br/>
+            • Required Methods: The object must have both predict() and fit() methods
+          </div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:24px; justify-content: center;">
+        {% if accuracy %}
+          <a href="{% url 'project2:active_learning' %}" class="btn primary">Continue to Active Learning →</a>
+        {% endif %}
+        <a href="{% url 'project2:index' %}" class="btn">Back to Home</a>
+      </div>
+    </div>
+
+    <footer>
+      Supervised Baseline - IMDB Sentiment Classification
+    </footer>
+  </div>
+
+  <script>
+    // Progress tracking for Task 1
+    let progressInterval;
+    
+    // Handle file upload
+    document.getElementById('upload-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      const fileInput = document.getElementById('model-file');
+      
+      if (!fileInput.files[0]) {
+        alert('Please select a model file to upload.');
+        return;
+      }
+      
+      // Show progress
+      const progressContainer = document.getElementById('progress-container');
+      const progressText = document.getElementById('progress-text');
+      progressContainer.style.display = 'block';
+      progressText.textContent = 'Uploading and evaluating model...';
+      
+      fetch('{% url "project2:upload_model" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        progressContainer.style.display = 'none';
+        if (data.status === 'success') {
+          document.getElementById('accuracy-display').textContent = data.accuracy + '%';
+          alert('Model uploaded and evaluated successfully!');
+          location.reload();
+        } else {
+          alert('Error: ' + data.message);
+        }
+      })
+      .catch(error => {
+        progressContainer.style.display = 'none';
+        alert('Upload failed: ' + error.message);
+      });
+    });
+    
+    function startProgressTracking() {
+      const progressContainer = document.getElementById('progress-container');
+      const progressFill = document.getElementById('progress-fill');
+      const progressText = document.getElementById('progress-text');
+      
+      progressContainer.style.display = 'block';
+      
+      progressInterval = setInterval(async () => {
+        try {
+          const response = await fetch('{% url "project2:get_progress" "task1" %}');
+          const data = await response.json();
+          
+          progressFill.style.width = data.progress + '%';
+          progressText.textContent = data.message;
+          
+          if (data.status === 'complete') {
+            clearInterval(progressInterval);
+            setTimeout(() => {
+              progressContainer.style.display = 'none';
+              // Extract accuracy from message and update display
+              const accuracyMatch = data.message.match(/(\d+\.\d+)%/);
+              if (accuracyMatch) {
+                document.getElementById('accuracy-display').textContent = accuracyMatch[1] + '%';
+              }
+            }, 2000);
+          }
+        } catch (error) {
+          console.error('Error fetching progress:', error);
+        }
+      }, 500);
+    }
+    
+    // Start progress tracking when page loads (if this is a training page)
+    {% if show_progress %}
+    startProgressTracking();
+    {% endif %}
+    
+    // Function to start training
+    async function startTraining() {
+      try {
+        const response = await fetch('{% url "project2:start_training" %}');
+        const data = await response.json();
+        if (data.status === 'started') {
+          startProgressTracking();
+        }
+      } catch (error) {
+        console.error('Error starting training:', error);
+      }
+    }
+  </script>
+</body>
+</html>

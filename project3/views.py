@@ -1,292 +1,186 @@
+from django.shortcuts import render
+from django.http import JsonResponse
+import pandas as pd
 import io
 import base64
-import numpy as np
-import pandas as pd
-from dataclasses import dataclass
-
-from django.http import JsonResponse, HttpResponseBadRequest
-from django.shortcuts import render
-
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-
-from sklearn.compose import ColumnTransformer
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from palmerpenguins import load_penguins
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.metrics import accuracy_score
+import numpy as np
 
-# ---- Data loading -----------------------------------------------------------
 
-def _load_penguins() -> pd.DataFrame:
-    # requires: pip install palmerpenguins
-    from palmerpenguins import load_penguins
-    df = load_penguins()
-    # keep only columns we use; drop rows with missing values
-    cols = [
-        "species", "island", "sex",
-        "bill_length_mm", "bill_depth_mm",
-        "flipper_length_mm", "body_mass_g"
-    ]
-    df = df[cols].dropna().reset_index(drop=True)
-    return df
-
-DF = _load_penguins()
-TARGET = "species"
-CAT_COLS = ["island", "sex"]
-NUM_COLS = ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"]
-
-# Precompute a nice sample for the UI
-DF_SAMPLE_HTML = (
-    DF.head(10)
-      .to_html(index=False, classes="table table-sm table-striped table-hover")
-)
-
-ROW_INDICES_FOR_UI = list(DF.index[:10])  # shown in the dropdown
-
-# ---- Helpers ----------------------------------------------------------------
-
-def _img_to_base64(fig) -> str:
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", bbox_inches="tight")
-    plt.close(fig)
-    return base64.b64encode(buf.getvalue()).decode("utf-8")
-
-def _lambda_to_tree_leaves(lambda_val: float) -> int:
-    # map λ ∈ [1e-4, 1.0] to leaves ∈ [30, 2] (higher λ → sparser)
-    lam = max(1e-4, min(float(lambda_val), 1.0))
-    leaves = int(np.round(np.interp(lam, [1e-4, 1.0], [30, 2])))
-    return max(2, leaves)
-
-def _build_preprocessor(for_model: str) -> ColumnTransformer:
-    if for_model == "logreg":
-        num_pipe = Pipeline([("scaler", StandardScaler())])
-    else:
-        num_pipe = "passthrough"
-    cat_pipe = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
-    return ColumnTransformer([
-        ("num", num_pipe, NUM_COLS),
-        ("cat", cat_pipe, CAT_COLS),
-    ])
-
-@dataclass
-class Trained:
-    pipe: Pipeline
-    features: list[str]
-    accuracy_pct: float
-    sparsity: int
-    model_type: str  # "tree" or "logreg"
-
-def _feature_names_from_preprocessor(pre: ColumnTransformer) -> list[str]:
-    names = []
-    # numeric
-    names.extend(NUM_COLS)
-    # categoricals from OHE
-    cat_enc = pre.named_transformers_["cat"]
-    cat_names = list(cat_enc.get_feature_names_out(CAT_COLS))
-    names.extend(cat_names)
-    return names
-
-def _train_model(lambda_val: float = 0.01, model_type: str = "tree") -> Trained:
-    model_type = "logreg" if model_type == "logreg" else "tree"
-
-    X = DF[CAT_COLS + NUM_COLS]
-    y = DF[TARGET]
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.25, random_state=42, stratify=y
-    )
-
-    pre = _build_preprocessor(model_type)
-
-    if model_type == "tree":
-        leaves = _lambda_to_tree_leaves(lambda_val)
-        model = DecisionTreeClassifier(
-            random_state=42, max_leaf_nodes=leaves, class_weight=None
-        )
-    else:
-        lam = max(1e-4, min(float(lambda_val), 1.0))
-        C = max(1e-3, min(1.0 / lam, 1e4))
-        model = LogisticRegression(
-            penalty="l1", C=C, solver="liblinear", multi_class="ovr", max_iter=2000
-        )
-
-    pipe = Pipeline([("pre", pre), ("model", model)])
-    pipe.fit(X_train, y_train)
-    acc = pipe.score(X_test, y_test) * 100.0
-
-    # sparsity
-    m = pipe.named_steps["model"]
-    if model_type == "tree":
-        sparsity = m.get_n_leaves()
-    else:
-        # count non-zero weights across all classes
-        sparsity = int(np.count_nonzero(m.coef_))
-
-    # derive feature names (after fit)
-    features = _feature_names_from_preprocessor(pipe.named_steps["pre"])
-    return Trained(pipe, features, round(acc, 2), sparsity, model_type)
-
-def _plot_tree_image(tr: Trained) -> str:
-    assert tr.model_type == "tree"
-    tree = tr.pipe.named_steps["model"]
-    class_names = list(tree.classes_)
-    fig, ax = plt.subplots(figsize=(16, 9))
+def plot_tree_image(clf, feature_names):
+    fig, ax = plt.subplots(figsize=(16, 10))
     plot_tree(
-        tree, ax=ax, filled=True, feature_names=tr.features,
-        class_names=class_names, proportion=True, fontsize=8
+        clf,
+        feature_names=feature_names,
+        class_names=["Adelie", "Chinstrap", "Gentoo"],
+        filled=True,
+        rounded=True,
+        fontsize=10,
+        precision=2,
+        ax=ax
     )
-    return _img_to_base64(fig)
+    plt.tight_layout()
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', dpi=200)
+    plt.close(fig)
+    buf.seek(0)
+    return base64.b64encode(buf.read()).decode('utf-8')
 
-def _plot_logreg_weights_image(tr: Trained, top_k: int = 12) -> str:
-    assert tr.model_type == "logreg"
-    lr = tr.pipe.named_steps["model"]
-    # max weight magnitude across classes
-    w = np.max(np.abs(lr.coef_), axis=0)
-    idx = np.argsort(w)[-top_k:][::-1]
-    labels = [tr.features[i] for i in idx]
-    vals = w[idx]
 
-    fig, ax = plt.subplots(figsize=(8, 6))
-    ax.barh(labels[::-1], vals[::-1])
-    ax.set_xlabel("Absolute weight (max across classes)")
-    ax.set_title("Top model features")
-    fig.tight_layout()
-    return _img_to_base64(fig)
+def plot_logreg_weights(coef, feature_names):
+    mean_abs_weights = np.mean(np.abs(coef), axis=0)
+    top_indices = np.argsort(mean_abs_weights)[-10:]
+    top_features = [feature_names[i] for i in top_indices]
+    top_values = mean_abs_weights[top_indices]
 
-# ---- Counterfactuals --------------------------------------------------------
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.barh(top_features, top_values)
+    ax.set_xlabel("Average |Weight| Across Classes")
+    ax.set_title("Top Contributing Features (Logistic Regression)")
+    plt.tight_layout()
 
-def _mad(series: pd.Series) -> float:
-    med = np.median(series)
-    return float(np.median(np.abs(series - med))) or 1.0
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', dpi=200)
+    plt.close(fig)
+    buf.seek(0)
+    return base64.b64encode(buf.read()).decode('utf-8')
 
-def _sample_counterfactuals(row_idx: int, target_label: str, n: int = 400,
-                            base_lambda: float = 0.01, use_model: str = "logreg") -> pd.DataFrame:
-    """Generate n local perturbations around a row; return a table of the
-    best counterfactuals according to MAD-weighted L1 distance."""
-    tr = _train_model(base_lambda, use_model)
-    x0 = DF.loc[row_idx, CAT_COLS + NUM_COLS].copy()
-
-    # numeric perturbations (Laplace around original, scaled by MAD of each column)
-    mads = {c: _mad(DF[c].values) for c in NUM_COLS}
-    num_samples = {
-        c: np.clip(
-            x0[c] + np.random.laplace(0.0, mads[c] * 0.2, size=n),
-            DF[c].min(), DF[c].max()
-        )
-        for c in NUM_COLS
-    }
-
-    # categorical perturbations: keep original w.p. 0.6 else sample from empirical distribution
-    rng = np.random.default_rng(0)
-    cat_samples = {}
-    for c in CAT_COLS:
-        choices, probs = np.unique(DF[c].values, return_counts=True)
-        probs = probs / probs.sum()
-        draws = rng.choice(choices, size=n, p=probs)
-        mask_keep = rng.random(n) < 0.6
-        draws[mask_keep] = x0[c]
-        cat_samples[c] = draws
-
-    X_new = pd.DataFrame({**cat_samples, **num_samples})
-    preds = tr.pipe.predict(X_new)
-    keep = preds == target_label
-    if not np.any(keep):
-        return pd.DataFrame(columns=["distance", "proba_target", *X_new.columns])
-
-    # distance: MAD-weighted L1 on numeric + 1 for each changed categorical
-    dist_num = np.zeros(np.sum(keep))
-    Xk = X_new.loc[keep].reset_index(drop=True)
-    for c in NUM_COLS:
-        dist_num += np.abs(Xk[c] - x0[c]) / mads[c]
-    dist_cat = sum((Xk[c] != x0[c]).astype(int) for c in CAT_COLS)
-    distance = dist_num + dist_cat
-
-    # score: probability of target
-    if hasattr(tr.pipe.named_steps["model"], "predict_proba"):
-        proba = tr.pipe.predict_proba(Xk)  # shape (n, n_classes)
-        classes = list(tr.pipe.named_steps["model"].classes_)
-        t_idx = classes.index(target_label)
-        proba_t = proba[:, t_idx]
-    else:
-        proba_t = np.ones(len(Xk))  # trees without predict_proba fallback
-
-    out = Xk.copy()
-    out.insert(0, "proba_target", np.round(proba_t, 3))
-    out.insert(0, "distance", np.round(distance, 3))
-
-    # keep top 8 closest
-    out = out.sort_values(["distance", "proba_target"], ascending=[True, False]).head(8)
-    return out
-
-def _df_to_bootstrap_table(df: pd.DataFrame) -> str:
-    if df.empty:
-        return '<div class="text-muted">No counterfactuals found nearby. Try a different row/target.</div>'
-    return df.to_html(index=False, classes="table table-sm table-striped table-hover")
-
-# ---- Views ------------------------------------------------------------------
 
 def index(request):
+    lambda_val = 0.01
+    model_type = "tree"
+
+    df = load_penguins().dropna().reset_index(drop=True)
+    df_sample = df.head(10).to_html(classes='table', index=False)
+    y = df["species"]
+    X = pd.get_dummies(df.drop(columns=["species"]))
+    y_encoded = LabelEncoder().fit_transform(y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.5, random_state=42)
+
+    max_leaf_nodes = max(2, int(200 / (lambda_val ** 2)))
+    max_leaf_nodes = min(max_leaf_nodes, 100)
+
+    clf = DecisionTreeClassifier(max_leaf_nodes=max_leaf_nodes, random_state=42)
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    sparsity = clf.get_n_leaves()
+    tree_plot = plot_tree_image(clf, list(X.columns))
+
+    return render(request, 'project3/index.html', {
+        'df_sample': df_sample,
+        'lambda_val': lambda_val,
+        'accuracy': round(float(accuracy) * 100, 2),
+        'sparsity': sparsity,
+        'tree_plot': tree_plot,
+        'model_type': model_type,
+        'row_indices': range(10), 
+    })
+
+
+def update_tree(request):
     lambda_val = float(request.GET.get("lambda", 0.01))
     model_type = request.GET.get("model", "tree")
 
-    tr = _train_model(lambda_val, model_type)
-    if tr.model_type == "tree":
-        img = _plot_tree_image(tr)
-    else:
-        img = _plot_logreg_weights_image(tr)
+    df = load_penguins().dropna().reset_index(drop=True)
+    y = df["species"]
+    X = pd.get_dummies(df.drop(columns=["species"]))
+    feature_names = list(X.columns)
+    y_encoded = LabelEncoder().fit_transform(y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.5, random_state=42)
 
-    return render(request, "project3/index.html", {
-        "lambda_val": lambda_val,
-        "model_type": tr.model_type,
-        "accuracy": tr.accuracy_pct,
-        "sparsity": tr.sparsity,
-        "tree_plot": img,
-        "df_sample": DF_SAMPLE_HTML,
-        "row_indices": ROW_INDICES_FOR_UI,
+    if model_type == "tree":
+        max_leaf_nodes = max(2, int(200 / (lambda_val ** 2)))
+        max_leaf_nodes = min(max_leaf_nodes, 100)
+
+        clf = DecisionTreeClassifier(max_leaf_nodes=max_leaf_nodes, random_state=42)
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        sparsity = clf.get_n_leaves()
+        tree_plot = plot_tree_image(clf, feature_names)
+
+    else:
+        C = 1.0 / lambda_val
+        clf = LogisticRegression(
+            penalty="l1", solver="liblinear", C=C, max_iter=1000, multi_class="ovr"
+        )
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        sparsity = int(np.sum(np.abs(clf.coef_) > 1e-4))
+        tree_plot = plot_logreg_weights(clf.coef_, feature_names)
+
+    return JsonResponse({
+        'lambda_val': float(lambda_val),
+        'accuracy': float(round(accuracy * 100, 2)),
+        'sparsity': int(sparsity),
+        'tree_plot': tree_plot,
+        'model_type': model_type
     })
-
-from django.http import JsonResponse
-
-def _to_py_number(x):
-    # works for numpy scalars and pandas dtypes
-    try:
-        return x.item()
-    except AttributeError:
-        return x
-
-def update_tree(request):
-    lambda_val = float(request.GET.get("lambda", "0.01"))
-    model_type = request.GET.get("model", "tree")
-
-    tr = _train_model(lambda_val, model_type)
-
-    if tr.model_type == "tree":
-        img = _plot_tree_image(tr)
-    else:
-        img = _plot_logreg_weights_image(tr)
-
-    # Cast everything to built-in Python types
-    data = {
-        "accuracy": round(float(_to_py_number(tr.accuracy_pct)), 2),
-        "sparsity": int(_to_py_number(tr.sparsity)),
-        "model_type": str(tr.model_type),
-        "tree_plot": img,  # already a base64 string
-    }
-    return JsonResponse(data)
 
 
 def generate_counterfactuals(request):
-    try:
-        row = int(request.GET.get("row", 0))
-        target = request.GET.get("target", DF[TARGET].unique().tolist()[0])
-    except ValueError:
-        return HttpResponseBadRequest("Invalid parameters")
+    # Get parameters
+    row_index = int(request.GET.get("row", 0))
+    target_class = request.GET.get("target", "Adelie")
 
-    if row < 0 or row >= len(DF):
-        return HttpResponseBadRequest("Row out of range")
+    # Load and preprocess
+    df = load_penguins().dropna().reset_index(drop=True)
+    y = df["species"]
+    X = df.drop(columns=["species"])
+    X_encoded = pd.get_dummies(X)
+    le = LabelEncoder()
+    y_encoded = le.fit_transform(y)
 
-    table = _sample_counterfactuals(row, target, n=400, base_lambda=0.01, use_model="logreg")
-    html = _df_to_bootstrap_table(table)
-    return JsonResponse({"html_table": html})
+    # Model training
+    clf = LogisticRegression(penalty="l1", solver="saga", C=1.0, max_iter=1000)
+    clf.fit(X_encoded, y_encoded)
+
+    # Get original x and its prediction
+    x_orig = X_encoded.iloc[row_index].values.reshape(1, -1)
+    pred_orig = clf.predict(x_orig)[0]
+    target_idx = le.transform([target_class])[0]
+
+    # Sample N perturbations around x
+    N = 1000
+    noise = np.random.normal(0, 0.1, size=(N, X_encoded.shape[1]))
+    x_samples = x_orig + noise
+    preds = clf.predict(x_samples)
+
+    # Keep only those classified as target
+    valid = x_samples[preds == target_idx]
+    if len(valid) == 0:
+        return JsonResponse({"html_table": "<p>No counterfactuals found for this target class.</p>"})
+
+    # Compute MAD
+    mad = np.median(np.abs(X_encoded - np.median(X_encoded, axis=0)), axis=0)
+    mad[mad == 0] = 1e-6  # Avoid division by zero
+
+    # Compute MAD-weighted L1 distances
+    distances = np.sum(np.abs(valid - x_orig) / mad, axis=1)
+
+    # Select top-k
+    k = min(5, len(distances))
+    top_indices = np.argsort(distances)[:k]
+    top_cf = valid[top_indices]
+
+    # Prepare DataFrame
+    df_cf = pd.DataFrame(top_cf, columns=X_encoded.columns)
+    rounded_distances = distances[top_indices]
+    
+    # Ensure it's always treated as an array, even if scalar
+    rounded_distances = np.array(rounded_distances, dtype=float).reshape(-1)
+    rounded_distances = np.round(rounded_distances, 2)
+    
+    df_cf.insert(0, "Distance", rounded_distances)
+
+    # Return as HTML
+    html_table = df_cf.to_html(index=False, float_format=lambda x: f"{x:.2f}")
+    return JsonResponse({"html_table": html_table})

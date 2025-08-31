@@ -1,20 +1,239 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Project 2 – Pool-Based Active Learning</h1>
-  <form method="post" action="{% url 'project2:run_active_learning' %}">
-    {% csrf_token %}
-    <label>Strategy:
-      <select name="strategy">
-        <option value="uncertainty">Uncertainty Sampling</option>
-        <option value="margin">Margin Sampling</option>
-        <option value="entropy">Entropy Sampling</option>
-      </select>
-    </label>
-    <br/>
-    <label>Number of Queries:
-      <input type="number" name="n_queries" value="10" min="1" max="100"/>
-    </label>
-    <br/>
-    <button type="submit">Query & Retrain</button>
-  </form>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Task 2: Pool-based Active Learning - Project 2</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #171a2b;
+      --muted: #a9b0c3;
+      --text: #e9ecf2;
+      --accent: #6aa2ff;
+      --accent-2: #6effc6;
+      --border: #23263a;
+      --danger: #ff7676;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 80% -10%, #1a1f35 0%, var(--bg) 60%), var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.4;
+    }
+
+    .wrap {
+      max-width: 1000px;
+      margin: 32px auto 72px;
+      padding: 0 20px;
+    }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+
+    h1 { font-size: 28px; margin: 0; letter-spacing: 0.3px; }
+    .subtle { color: var(--muted); font-size: 14px; }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    h2 { margin: 0 0 12px; font-size: 22px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 8px; color: var(--muted);
+      text-decoration: none; margin-bottom: 14px; font-size: 14px;
+    }
+    .back:hover { color: var(--text); }
+
+    .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+
+    .btn {
+      appearance: none; border: 1px solid var(--border); background: var(--card); color: var(--text);
+      padding: 10px 14px; border-radius: 12px; font-weight: 600; letter-spacing: 0.2px;
+      cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+      text-decoration: none; display: inline-block;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: #2b3150; box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
+    .btn.primary { background: linear-gradient(180deg, #1e264b, #1a2141); border-color: #2b3150; }
+
+    select, input[type="number"] {
+      background: var(--card); border: 1px solid var(--border); color: var(--text);
+      padding: 10px 12px; border-radius: 10px; min-width: 220px;
+    }
+
+    .muted-box { color: var(--muted); border: 1px dashed var(--border); border-radius: 12px; padding: 12px; }
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #1d233b; border: 1px solid #2b3150; font-size: 12px; color: var(--muted); }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+    /* Progress Bar Styles */
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 4px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    footer { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
+
+    @media (max-width: 760px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Task 2 · Pool-based Active Learning</h1>
+        <div class="subtle">IMDB 50k · Query Strategy Selection · <span class="pill">Ready</span></div>
+      </div>
+      <a href="{% url 'project2:index' %}" class="btn">🏠 Home</a>
+    </header>
+
+    <a class="back" href="{% url 'project2:index' %}">← Back to Home</a>
+    <div class="panel">
+      <h2>Active Learning Configuration</h2>
+      <p class="subtle" style="margin:8px 0 18px">Choose a strategy and run active learning iterations on unlabeled data.</p>
+
+      <form method="post" action="{% url 'project2:run_active_learning' %}" id="al-form">
+        {% csrf_token %}
+        <div class="row" style="margin-bottom:16px">
+          <label for="strategy">Strategy:</label>
+          <select id="strategy" name="strategy">
+            <option value="uncertainty">Uncertainty Sampling</option>
+            <option value="margin">Margin Sampling</option>
+            <option value="entropy">Entropy Sampling</option>
+            <option value="committee">Query-by-Committee</option>
+          </select>
+          <label for="n_queries">Number of Queries:</label>
+          <input type="number" id="n_queries" name="n_queries" value="10" min="1" max="100"/>
+          <button type="submit" class="btn primary" id="submit-btn">▶ Run Active Learning</button>
+        </div>
+      </form>
+
+      <!-- Progress Bar -->
+      <div id="progress-container" style="display: none; margin: 20px 0;">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-text" id="progress-text">Initializing...</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="muted-box">
+          <strong>Uncertainty Sampling:</strong> Query samples where the model is most uncertain about the prediction.
+        </div>
+        <div class="muted-box">
+          <strong>Margin Sampling:</strong> Query samples with the smallest margin between top two predictions.
+        </div>
+        <div class="muted-box">
+          <strong>Entropy Sampling:</strong> Query samples with highest prediction entropy (most informative).
+        </div>
+        <div class="muted-box">
+          <strong>Query-by-Committee:</strong> Use ensemble of diverse models to query samples with highest disagreement.
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:18px">
+        <a href="{% url 'project2:index' %}" class="btn">Back to Home</a>
+        <a href="{% url 'project2:experiment' %}" class="btn">Continue to Experiments →</a>
+      </div>
+    </div>
+
+    <footer>
+      Pool-based Active Learning - IMDB Sentiment Classification
+    </footer>
+  </div>
+
+     <script>
+     // Progress tracking for Task 2
+     let progressInterval;
+     
+     document.getElementById('al-form').addEventListener('submit', function(e) {
+       e.preventDefault();
+       
+       const submitBtn = document.getElementById('submit-btn');
+       const progressContainer = document.getElementById('progress-container');
+       const progressFill = document.getElementById('progress-fill');
+       const progressText = document.getElementById('progress-text');
+       
+       // Disable submit button and show progress
+       submitBtn.disabled = true;
+       submitBtn.textContent = 'Running...';
+       progressContainer.style.display = 'block';
+       
+       // Submit form data and start progress tracking
+       const formData = new FormData(this);
+       
+       fetch('{% url "project2:run_active_learning" %}', {
+         method: 'POST',
+         body: formData,
+         headers: {
+           'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+         }
+       })
+       .then(response => response.json())
+       .then(data => {
+         if (data.status === 'started') {
+           // Start progress tracking
+           progressInterval = setInterval(async () => {
+             try {
+               const response = await fetch('{% url "project2:get_progress" "task2" %}');
+               const data = await response.json();
+               
+               progressFill.style.width = data.progress + '%';
+               progressText.textContent = data.message;
+               
+               if (data.status === 'complete') {
+                 clearInterval(progressInterval);
+                 // Get results and redirect
+                 window.location.href = '{% url "project2:get_al_results" %}';
+               } else if (data.status === 'error') {
+                 clearInterval(progressInterval);
+                 progressText.textContent = data.message;
+                 submitBtn.disabled = false;
+                 submitBtn.textContent = '▶ Run Active Learning';
+               }
+             } catch (error) {
+               console.error('Error fetching progress:', error);
+             }
+           }, 500);
+         }
+       })
+       .catch(error => {
+         console.error('Error starting active learning:', error);
+         submitBtn.disabled = false;
+         submitBtn.textContent = '▶ Run Active Learning';
+         progressContainer.style.display = 'none';
+       });
+     });
+   </script>
+</body>
+</html>
